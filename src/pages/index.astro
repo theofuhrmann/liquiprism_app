@@ -2,14 +2,17 @@
 import Visualizer from "../components/Visualizer.astro";
 import Sidebar from "../components/Sidebar.astro";
 import Instructions from "../components/Instructions.astro";
-import "../styles/styles.css"; /* Import the CSS file */
+import Citation from "../components/Citation.astro";
+import "../styles/styles.css";
 ---
 
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>3D Cube with Three.js</title>
+        <link rel="icon" type="image/png" href="/liquiprism.png" />
+
+        <title>Liquiprism</title>
     </head>
     <body>
         <Sidebar />
@@ -17,5 +20,6 @@ import "../styles/styles.css"; /* Import the CSS file */
             <Visualizer />
         </div>
         <Instructions />
+        <Citation />
     </body>
 </html>
