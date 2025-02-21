@@ -1,0 +1,136 @@
+---
+import "../styles/styles.css"; /* Import the CSS file */
+---
+
+<div id="sidebar">
+    <h2>Disclaimer: WIP</h2>
+    <label for="numCells">dimension:</label>
+    <div class="slider-container">
+        <span id="minValue">1</span>
+        <input
+            type="range"
+            id="numCells"
+            name="numCells"
+            min="1"
+            max="20"
+            value="5"
+            oninput="updateNumberCellsSliderValue(this)"
+        />
+        <span id="maxValue">20</span>
+    </div>
+
+    <label for="speed">speed:</label>
+    <div class="slider-container">
+        <span id="minValue">1x</span>
+        <input
+            type="range"
+            id="speed"
+            name="speed"
+            min="1"
+            max="5"
+            value="1"
+            oninput="updateSpeedSliderValue(this)"
+        />
+        <span id="maxValue">5x</span>
+    </div>
+
+    <div class="form-group">
+        <label for="randomUpdateRate">random update rate:</label>
+        <input
+            type="checkbox"
+            id="randomUpdateRate"
+            name="randomUpdateRate"
+            onchange=" updateRandomUpdateRate(this)"
+        />
+    </div>
+
+    <div id="legend">
+        <div class="legend-item" id="legend-front">
+            <div class="color-box"></div>
+            <span><pre>front&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+        <div class="legend-item" id="legend-back">
+            <div class="color-box"></div>
+            <span><pre>back&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+        <div class="legend-item" id="legend-left">
+            <div class="color-box"></div>
+            <span><pre>left&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+        <div class="legend-item" id="legend-right">
+            <div class="color-box"></div>
+            <span><pre>right&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+        <div class="legend-item" id="legend-top">
+            <div class="color-box"></div>
+            <span><pre>top&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+        <div class="legend-item" id="legend-bottom">
+            <div class="color-box"></div>
+            <span><pre>bottom&#9;</pre></span>
+            <span class="update-rate">update rate: 0</span>
+        </div>
+    </div>
+</div>
+
+<script is:inline>
+    function updateNumberCellsSliderValue(slider) {
+        slider.setAttribute("data-value", slider.value);
+        const event = new CustomEvent("numCellsChange", {
+            detail: { numCells: slider.value },
+        });
+        document.dispatchEvent(event);
+    }
+
+    function updateSpeedSliderValue(slider) {
+        slider.setAttribute("data-value", slider.value);
+        const event = new CustomEvent("speed", {
+            detail: { speed: slider.value },
+        });
+        document.dispatchEvent(event);
+    }
+
+    function updateRandomUpdateRate(checkbox) {
+        const event = new CustomEvent("randomUpdateRateChange", {
+            detail: { randomUpdateRate: checkbox.checked },
+        });
+        document.dispatchEvent(event);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const slider = document.getElementById("numCells");
+        if (slider instanceof HTMLInputElement) {
+            updateNumberCellsSliderValue(slider);
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const slider = document.getElementById("speed");
+        if (slider instanceof HTMLInputElement) {
+            updateSpeedSliderValue(slider);
+        }
+    });
+
+    // Update the legend with the data from Cube.astro
+    document.addEventListener("updateLegend", (event) => {
+        // No type assertion here
+        const legendData = event.detail.legendData;
+        legendData.forEach((face) => {
+            const legendItem = document.getElementById(
+                `legend-${face.position.toLowerCase()}`,
+            );
+            console.log(`legend-${face.position.toLowerCase()}`);
+            if (legendItem) {
+                legendItem.querySelector(".color-box").style.backgroundColor =
+                    face.color;
+                legendItem.querySelector(".update-rate").textContent =
+                    `update rate: ${face.updateRate}`;
+            }
+        });
+    });
+</script>

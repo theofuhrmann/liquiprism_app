@@ -1,0 +1,166 @@
+---
+
+---
+
+<div id="scene-container"></div>
+
+<script>
+  import * as THREE from "three";
+  import { Liquiprism } from "../scripts/liquiprism.ts";
+  import { setupThree } from "../scripts/threeSetup.ts";
+  import {
+    createLiquiprismMeshes,
+    updateLegend,
+    updateFrontmostFace,
+    updateCells,
+    updateRotation,
+    calculateFaceDepth,
+  } from "../scripts/visualizerLogic.ts";
+  document.addEventListener("DOMContentLoaded", () => {
+    const { scene, camera, renderer, container, d } =
+      setupThree("scene-container");
+
+    const FACE_TINTS: Record<number, [number, number, number]> = {
+      0: [0, 255, 0], // FRONT
+      1: [255, 0, 0], // BACK
+      2: [0, 255, 255], // LEFT
+      3: [255, 0, 255], // RIGHT
+      4: [255, 255, 0], // TOP
+      5: [0, 0, 255], // BOTTOM
+    };
+
+    const vertices = [
+      [-1, -1, -1],
+      [1, -1, -1],
+      [1, 1, -1],
+      [-1, 1, -1],
+      [-1, -1, 1],
+      [1, -1, 1],
+      [1, 1, 1],
+      [-1, 1, 1],
+    ];
+
+    const FACE_VERTICES = {
+      0: [0, 1, 2, 3], // FRONT
+      1: [4, 5, 6, 7], // BACK
+      2: [0, 3, 7, 4], // LEFT
+      3: [1, 5, 6, 2], // RIGHT
+      4: [3, 2, 6, 7], // TOP
+      5: [0, 1, 5, 4], // BOTTOM
+    };
+
+    let speed = 1;
+
+    let liquiprism = new Liquiprism(7, false);
+    let faceCellMeshes: THREE.Mesh[][] = [];
+    let faceGroups: THREE.Group[] = [];
+
+    const liquiprismGroup = new THREE.Group();
+    scene.add(liquiprismGroup);
+
+    function createLiquiprism() {
+      const { faceCellMeshes: meshes, faceGroups: groups } =
+        createLiquiprismMeshes(liquiprism, liquiprismGroup, FACE_TINTS);
+      faceCellMeshes = meshes;
+      faceGroups = groups;
+      updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
+      updateLegend(liquiprism, FACE_TINTS);
+    }
+
+    createLiquiprism();
+
+    document.addEventListener("numCellsChange", (event) => {
+      const customEvent = event as CustomEvent;
+      const numCells = customEvent.detail.numCells;
+      liquiprism = new Liquiprism(numCells, liquiprism.random_update_rate);
+      createLiquiprism();
+    });
+
+    document.addEventListener("speed", (event) => {
+      const customEvent = event as CustomEvent;
+      speed = customEvent.detail.speed;
+    });
+
+    document.addEventListener("randomUpdateRateChange", (event) => {
+      const customEvent = event as CustomEvent;
+      const randomUpdateRate = customEvent.detail.randomUpdateRate;
+      liquiprism = new Liquiprism(liquiprism.size, randomUpdateRate);
+      createLiquiprism();
+    });
+
+    const keys: Record<string, boolean> = {};
+
+    document.addEventListener("keydown", (event) => {
+      keys[event.key] = true;
+    });
+
+    document.addEventListener("keyup", (event) => {
+      keys[event.key] = false;
+    });
+
+    let angle_x = 0;
+    let angle_y = 0;
+    let lastTime = 0;
+
+    updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
+
+    let lastUpdate = 0;
+
+    function animate(time: number) {
+      requestAnimationFrame(animate);
+
+      const t = time / 500;
+      const delta = t - lastTime;
+      lastTime = t;
+
+      const angles = updateRotation(keys, angle_x, angle_y, delta);
+      angle_x = angles.angle_x;
+      angle_y = angles.angle_y;
+
+      if (time - lastUpdate >= 1000 / speed) {
+        liquiprism.step();
+        updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
+        lastUpdate = time;
+      }
+
+      liquiprismGroup.rotation.x = angle_x;
+      liquiprismGroup.rotation.y = angle_y;
+
+      const transformedVertices = vertices.map((vertex) => {
+        const vector = new THREE.Vector3(vertex[0], vertex[1], vertex[2]);
+        vector.applyMatrix4(liquiprismGroup.matrixWorld);
+        return vector;
+      });
+
+      const sortedFaces = Object.entries(FACE_VERTICES).sort(
+        (a, b) =>
+          calculateFaceDepth(b[1], transformedVertices) -
+          calculateFaceDepth(a[1], transformedVertices),
+      );
+
+      sortedFaces.forEach(([facePosition, faceVertices], index) => {
+        const faceIndex = parseInt(facePosition, 10);
+        const faceGroup = faceGroups[faceIndex];
+        if (faceGroup) {
+          faceGroup.renderOrder = index;
+        }
+      });
+
+      updateFrontmostFace(liquiprism, faceCellMeshes, liquiprismGroup, camera);
+
+      renderer.render(scene, camera);
+    }
+
+    animate(0);
+
+    window.addEventListener("resize", () => {
+      const aspect = container.clientWidth / container.clientHeight;
+      camera.left = -d * aspect;
+      camera.right = d * aspect;
+      camera.top = d;
+      camera.bottom = -d;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+  });
+</script>

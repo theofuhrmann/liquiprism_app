@@ -1,0 +1,76 @@
+---
+import "../styles/styles.css"; /* Import the CSS file */
+---
+
+<div id="instructions">
+    <div class="arrow-keys">
+        <div class="key-instruction">
+            <div class="arrow-key up" id="arrow-up">↑</div>
+            <p>Rotate on the X axis up</p>
+        </div>
+        <div class="key-instruction">
+            <div class="arrow-key down" id="arrow-down">↓</div>
+            <p>Rotate on the X axis down</p>
+        </div>
+        <div class="key-instruction">
+            <div class="arrow-key left" id="arrow-left">←</div>
+            <p>Rotate on the Y axis left</p>
+        </div>
+        <div class="key-instruction">
+            <div class="arrow-key right" id="arrow-right">→</div>
+            <p>Rotate on the Y axis right</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("keydown", (event) => {
+        const key = event.key;
+        if (key === "ArrowUp") {
+            const arrowUp = document.getElementById("arrow-up");
+            if (arrowUp) {
+                arrowUp.classList.add("active");
+            }
+        } else if (key === "ArrowDown") {
+            const arrowDown = document.getElementById("arrow-down");
+            if (arrowDown) {
+                arrowDown.classList.add("active");
+            }
+        } else if (key === "ArrowLeft") {
+            const arrowLeft = document.getElementById("arrow-left");
+            if (arrowLeft) {
+                arrowLeft.classList.add("active");
+            }
+        } else if (key === "ArrowRight") {
+            const arrowRight = document.getElementById("arrow-right");
+            if (arrowRight) {
+                arrowRight.classList.add("active");
+            }
+        }
+    });
+
+    document.addEventListener("keyup", (event) => {
+        const key = event.key;
+        if (key === "ArrowUp") {
+            const arrowUp = document.getElementById("arrow-up");
+            if (arrowUp) {
+                arrowUp.classList.remove("active");
+            }
+        } else if (key === "ArrowDown") {
+            const arrowDown = document.getElementById("arrow-down");
+            if (arrowDown) {
+                arrowDown.classList.remove("active");
+            }
+        } else if (key === "ArrowLeft") {
+            const arrowLeft = document.getElementById("arrow-left");
+            if (arrowLeft) {
+                arrowLeft.classList.remove("active");
+            }
+        } else if (key === "ArrowRight") {
+            const arrowRight = document.getElementById("arrow-right");
+            if (arrowRight) {
+                arrowRight.classList.remove("active");
+            }
+        }
+    });
+</script>
