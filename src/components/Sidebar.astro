@@ -4,17 +4,17 @@ import "../styles/styles.css"; /* Import the CSS file */
 
 <div id="sidebar">
     <h2>Disclaimer: WIP</h2>
-    <label for="numCells">dimension:</label>
+    <label for="dimension">dimension:</label>
     <div class="slider-container">
         <span id="minValue">1</span>
         <input
             type="range"
-            id="numCells"
-            name="numCells"
+            id="dimension"
+            name="dimension"
             min="1"
             max="20"
             value="5"
-            oninput="updateNumberCellsSliderValue(this)"
+            oninput="updateDimensionSliderValue(this)"
         />
         <span id="maxValue">20</span>
     </div>
@@ -79,10 +79,10 @@ import "../styles/styles.css"; /* Import the CSS file */
 </div>
 
 <script is:inline>
-    function updateNumberCellsSliderValue(slider) {
+    function updateDimensionSliderValue(slider) {
         slider.setAttribute("data-value", slider.value);
-        const event = new CustomEvent("numCellsChange", {
-            detail: { numCells: slider.value },
+        const event = new CustomEvent("dimensionChange", {
+            detail: { dimension: slider.value },
         });
         document.dispatchEvent(event);
     }
@@ -103,9 +103,9 @@ import "../styles/styles.css"; /* Import the CSS file */
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        const slider = document.getElementById("numCells");
+        const slider = document.getElementById("dimension");
         if (slider instanceof HTMLInputElement) {
-            updateNumberCellsSliderValue(slider);
+            updateDimensionSliderValue(slider);
         }
     });
 

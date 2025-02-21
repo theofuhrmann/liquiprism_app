@@ -69,10 +69,10 @@
 
     createLiquiprism();
 
-    document.addEventListener("numCellsChange", (event) => {
+    document.addEventListener("dimensionChange", (event) => {
       const customEvent = event as CustomEvent;
-      const numCells = customEvent.detail.numCells;
-      liquiprism = new Liquiprism(numCells, liquiprism.random_update_rate);
+      const dimension = customEvent.detail.dimension;
+      liquiprism = new Liquiprism(dimension, liquiprism.random_update_rate);
       createLiquiprism();
     });
 

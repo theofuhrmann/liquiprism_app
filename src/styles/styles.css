@@ -187,13 +187,11 @@ input[type="range"]::-ms-thumb {
 }
 
 #instructions {
+    width: 200px;
     position: absolute;
     bottom: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 10px;
-    border-radius: 5px;
     font-family: monospace;
 }
 
@@ -201,20 +199,18 @@ input[type="range"]::-ms-thumb {
     display: flex;
     flex-direction: column;
     align-items: center;
-    align-items: flex-start;
 }
 
+
 .arrow-key {
-    width: 20px;
-    height: 20px;
-    background: black;
-    color: white;
-    border: 2px solid white;
+    width: 30px;
+    height: 30px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 10px;
-    font-family: monospace;
+    justify-content: center;
+    border: 1px solid white;
+    margin: 2px;
+    font-size: 20px;
     font-weight: bold;
 }
 
@@ -238,4 +234,13 @@ input[type="range"]::-ms-thumb {
     width: 20px;
     height: 20px;
     margin-right: 10px;
+}
+
+#citation {
+    width: 200px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-family: monospace;
 }
