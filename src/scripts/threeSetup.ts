@@ -15,7 +15,7 @@ export function setupThree(containerId: string): ThreeInstance {
     }
 
     const aspect = container.clientWidth / container.clientHeight;
-    const d = 7;
+    const d = 6;
     const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
     camera.position.set(0, 0, 10);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
