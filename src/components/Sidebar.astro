@@ -3,7 +3,11 @@ import "../styles/styles.css"; /* Import the CSS file */
 ---
 
 <div id="sidebar">
-    <h2>Disclaimer: WIP</h2>
+    <h1>Liquiprism (WIP)</h1>
+    <div>
+        <button id="togglePlay" class="play-button">play</button>
+    </div>
+
     <label for="dimension">dimension:</label>
     <div class="slider-container">
         <span id="minValue">1</span>
@@ -13,7 +17,7 @@ import "../styles/styles.css"; /* Import the CSS file */
             name="dimension"
             min="1"
             max="20"
-            value="5"
+            value="7"
             oninput="updateDimensionSliderValue(this)"
         />
         <span id="maxValue">20</span>
@@ -40,45 +44,68 @@ import "../styles/styles.css"; /* Import the CSS file */
             type="checkbox"
             id="randomUpdateRate"
             name="randomUpdateRate"
-            onchange=" updateRandomUpdateRate(this)"
+            onchange="updateRandomUpdateRate(this)"
         />
     </div>
 
     <div id="legend">
+        <div class="legend-item">
+            <span><pre>c   p       r</pre></span>
+        </div>
+
         <div class="legend-item" id="legend-front">
             <div class="color-box"></div>
             <span><pre>front&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
         <div class="legend-item" id="legend-back">
             <div class="color-box"></div>
             <span><pre>back&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
         <div class="legend-item" id="legend-left">
             <div class="color-box"></div>
             <span><pre>left&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
         <div class="legend-item" id="legend-right">
             <div class="color-box"></div>
             <span><pre>right&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
         <div class="legend-item" id="legend-top">
             <div class="color-box"></div>
             <span><pre>top&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
         <div class="legend-item" id="legend-bottom">
             <div class="color-box"></div>
             <span><pre>bottom&#9;</pre></span>
-            <span class="update-rate">update rate: 0</span>
+            <span class="update-rate">0</span>
         </div>
+    </div>
+    <div class="explainer">
+        <p>c: color</p>
+        <p>p: position</p>
+        <p>r: update rate</p>
     </div>
 </div>
 
 <script is:inline>
+    let playing = false;
+
+    document
+        .querySelector("#togglePlay")
+        .addEventListener("click", function () {
+            playing = !playing;
+            this.textContent = playing ? "pause" : "play";
+            this.classList.toggle("playing");
+            const event = new CustomEvent("togglePlay", {
+                detail: { playing },
+            });
+            document.dispatchEvent(event);
+        });
+
     function updateDimensionSliderValue(slider) {
         slider.setAttribute("data-value", slider.value);
         const event = new CustomEvent("dimensionChange", {
@@ -124,12 +151,11 @@ import "../styles/styles.css"; /* Import the CSS file */
             const legendItem = document.getElementById(
                 `legend-${face.position.toLowerCase()}`,
             );
-            console.log(`legend-${face.position.toLowerCase()}`);
             if (legendItem) {
                 legendItem.querySelector(".color-box").style.backgroundColor =
                     face.color;
                 legendItem.querySelector(".update-rate").textContent =
-                    `update rate: ${face.updateRate}`;
+                    `${face.updateRate}`;
             }
         });
     });
