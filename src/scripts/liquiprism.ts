@@ -44,7 +44,7 @@ class Cell {
     }
 }
 
-class Face {
+export class Face {
     position: FacePosition;
     size: number;
     cells: Cell[];

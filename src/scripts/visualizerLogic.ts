@@ -83,6 +83,14 @@ export function createLiquiprismMeshes(
     return { faceCellMeshes, faceGroups };
 }
 
+const getFaceCenter = (faceMeshes: THREE.Mesh[]) => {
+    const center = new THREE.Vector3();
+    faceMeshes.forEach(mesh => {
+        center.add(new THREE.Vector3().setFromMatrixPosition(mesh.matrixWorld));
+    });
+    return center.divideScalar(faceMeshes.length);
+};
+
 export function updateFrontmostFace(
     liquiprism: Liquiprism,
     faceCellMeshes: THREE.Mesh[][],
@@ -93,15 +101,15 @@ export function updateFrontmostFace(
     let frontmostFace = liquiprism.faces[0];
 
     liquiprism.faces.forEach((face) => {
-        const faceNormal = new THREE.Vector3();
-        faceNormal.setFromMatrixPosition(faceCellMeshes[face.position][0].matrixWorld);
-        faceNormal.sub(new THREE.Vector3().setFromMatrixPosition(liquiprismGroup.matrixWorld));
-        faceNormal.normalize();
+        const faceCenter = getFaceCenter(faceCellMeshes[face.position]);
+        const faceDirection = new THREE.Vector3()
+            .subVectors(faceCenter, liquiprismGroup.position)
+            .normalize();
 
         const cameraDirection = new THREE.Vector3();
         camera.getWorldDirection(cameraDirection);
 
-        const dot = faceNormal.dot(cameraDirection);
+        const dot = faceDirection.dot(cameraDirection);
         if (dot < minDot) {
             minDot = dot;
             frontmostFace = face;

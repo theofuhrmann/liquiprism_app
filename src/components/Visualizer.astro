@@ -7,6 +7,7 @@
 <script>
   import * as THREE from "three";
   import { Liquiprism } from "../scripts/liquiprism.ts";
+  // import { Sonifier } from "../scripts/sonifier.ts";
   import { setupThree } from "../scripts/threeSetup.ts";
   import {
     createLiquiprismMeshes,
@@ -16,6 +17,7 @@
     updateRotation,
     calculateFaceDepth,
   } from "../scripts/visualizerLogic.ts";
+
   document.addEventListener("DOMContentLoaded", () => {
     const { scene, camera, renderer, container, d } =
       setupThree("scene-container");
@@ -50,8 +52,8 @@
     };
 
     let speed = 1;
-
     let liquiprism = new Liquiprism(7, false);
+    // let sonifier = new Sonifier(liquiprism);
     let faceCellMeshes: THREE.Mesh[][] = [];
     let faceGroups: THREE.Group[] = [];
 
@@ -74,6 +76,7 @@
       const dimension = customEvent.detail.dimension;
       liquiprism = new Liquiprism(dimension, liquiprism.random_update_rate);
       createLiquiprism();
+      // sonifier = new Sonifier(liquiprism);
     });
 
     document.addEventListener("speed", (event) => {
@@ -86,6 +89,7 @@
       const randomUpdateRate = customEvent.detail.randomUpdateRate;
       liquiprism = new Liquiprism(liquiprism.size, randomUpdateRate);
       createLiquiprism();
+      // sonifier = new Sonifier(liquiprism);
     });
 
     const keys: Record<string, boolean> = {};
@@ -98,33 +102,13 @@
       keys[event.key] = false;
     });
 
-    let angle_x = 0;
-    let angle_y = 0;
-    let lastTime = 0;
-
-    updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
-
-    let lastUpdate = 0;
-
-    function animate(time: number) {
-      requestAnimationFrame(animate);
-
-      const t = time / 500;
-      const delta = t - lastTime;
-      lastTime = t;
-
-      const angles = updateRotation(keys, angle_x, angle_y, delta);
-      angle_x = angles.angle_x;
-      angle_y = angles.angle_y;
-
+    function updateCellsAndFrontmostFace(time: number) {
       if (time - lastUpdate >= 1000 / speed) {
         liquiprism.step();
         updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
+        // sonifier.update();
         lastUpdate = time;
       }
-
-      liquiprismGroup.rotation.x = angle_x;
-      liquiprismGroup.rotation.y = angle_y;
 
       const transformedVertices = vertices.map((vertex) => {
         const vector = new THREE.Vector3(vertex[0], vertex[1], vertex[2]);
@@ -147,11 +131,63 @@
       });
 
       updateFrontmostFace(liquiprism, faceCellMeshes, liquiprismGroup, camera);
-
-      renderer.render(scene, camera);
     }
 
-    animate(0);
+    let animationFrameId: number | null = null;
+
+    function animateCells(time: number) {
+      animationFrameId = requestAnimationFrame(animateCells);
+      updateCellsAndFrontmostFace(time);
+    }
+
+    let rotationLastTime: number | null = null;
+
+    let angle_x = 0;
+    let angle_y = 0;
+    let lastUpdate = 0;
+    let rotationFrameId: number | null = null;
+
+    function animateRotation(time: number) {
+      if (rotationLastTime === null) {
+        rotationLastTime = time;
+      }
+      const t = time / 500;
+      const delta = (time - rotationLastTime!) / 500;
+      rotationLastTime = time;
+
+      const angles = updateRotation(keys, angle_x, angle_y, delta);
+      angle_x = angles.angle_x;
+      angle_y = angles.angle_y;
+
+      liquiprismGroup.rotation.x = angle_x;
+      liquiprismGroup.rotation.y = angle_y;
+
+      renderer.render(scene, camera);
+
+      rotationFrameId = requestAnimationFrame(animateRotation);
+    }
+
+    function startAnimation() {
+      if (!animationFrameId) {
+        animateCells(0);
+      }
+    }
+
+    function pauseAnimation() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    document.addEventListener("togglePlay", (event) => {
+      const { playing } = (event as CustomEvent).detail;
+      if (playing) {
+        startAnimation();
+      } else {
+        pauseAnimation();
+      }
+    });
 
     window.addEventListener("resize", () => {
       const aspect = container.clientWidth / container.clientHeight;
@@ -162,5 +198,9 @@
       camera.updateProjectionMatrix();
       renderer.setSize(container.clientWidth, container.clientHeight);
     });
+
+    animateRotation(0);
+
+    pauseAnimation();
   });
 </script>
