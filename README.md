@@ -11,10 +11,6 @@ The project is designed to provide a creative tool for musicians and composers t
 - **Audio Sonification**: Generate polyrhythms and soundscapes based on the automata state (see [`src/scripts/sonifier.ts`](src/scripts/sonifier.ts)).
 - **Interactivity**: Control animation, rotation, and sound properties through an intuitive sidebar (see [`src/components/Sidebar.astro`](src/components/Sidebar.astro)).
 
-## License
-
-This project is provided as-is for experimental and educational purposes.
-
 ## Acknowledgments
 
 Inspired by Dorin, Alan. "LiquiPrism: Generating polyrhythms with cellular automata." _Proceedings of the 2002 International Conference on Auditory Display, Kyoto, Japan, July 2._ Vol. 5. 2002.
