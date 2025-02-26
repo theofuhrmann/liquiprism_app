@@ -1,5 +1,5 @@
 ---
-import "../styles/styles.css"; /* Import the CSS file */
+import "../styles/styles.css";
 ---
 
 <div id="sidebar">
@@ -25,12 +25,12 @@ import "../styles/styles.css"; /* Import the CSS file */
 
     <label for="speed">speed:</label>
     <div class="slider-container">
-        <span id="minValue">1x</span>
+        <span id="minValue">0.5x</span>
         <input
             type="range"
             id="speed"
             name="speed"
-            min="1"
+            min="0.5"
             max="5"
             value="1"
             oninput="updateSpeedSliderValue(this)"
@@ -49,62 +49,123 @@ import "../styles/styles.css"; /* Import the CSS file */
     </div>
 
     <div id="legend">
-        <div class="legend-item">
-            <span><pre>c   p       r</pre></span>
-        </div>
-
-        <div class="legend-item" id="legend-front">
-            <div class="color-box"></div>
-            <span><pre>front&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
-        <div class="legend-item" id="legend-back">
-            <div class="color-box"></div>
-            <span><pre>back&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
-        <div class="legend-item" id="legend-left">
-            <div class="color-box"></div>
-            <span><pre>left&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
-        <div class="legend-item" id="legend-right">
-            <div class="color-box"></div>
-            <span><pre>right&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
-        <div class="legend-item" id="legend-top">
-            <div class="color-box"></div>
-            <span><pre>top&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
-        <div class="legend-item" id="legend-bottom">
-            <div class="color-box"></div>
-            <span><pre>bottom&#9;</pre></span>
-            <span class="update-rate">0</span>
-        </div>
+        <table class="legend-table">
+            <tr class="legend-item legend-header">
+                <th>c</th>
+                <th>r</th>
+                <th>i</th>
+                <th>m</th>
+            </tr>
+            <tr class="legend-item" id="legend-front">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+            <tr class="legend-item" id="legend-back">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+            <tr class="legend-item" id="legend-left">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+            <tr class="legend-item" id="legend-right">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+            <tr class="legend-item" id="legend-top">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+            <tr class="legend-item" id="legend-bottom">
+                <td class="color-box"></td>
+                <td class="update-rate">0</td>
+                <td class="instrument">sine</td>
+                <td>
+                    <input
+                        type="checkbox"
+                        id="muteFace"
+                        name="muteFace"
+                        onchange="setMuteFace(this)"
+                    />
+                </td>
+            </tr>
+        </table>
     </div>
     <div class="explainer">
         <p>c: color</p>
-        <p>p: position</p>
         <p>r: update rate</p>
+        <p>i: instrument</p>
+        <p>m: mute</p>
     </div>
 </div>
 
 <script is:inline>
     let playing = false;
 
-    document
-        .querySelector("#togglePlay")
-        .addEventListener("click", function () {
-            playing = !playing;
-            this.textContent = playing ? "pause" : "play";
-            this.classList.toggle("playing");
-            const event = new CustomEvent("togglePlay", {
-                detail: { playing },
-            });
-            document.dispatchEvent(event);
+    function togglePlay() {
+        playing = !playing;
+        const button = document.getElementById("togglePlay");
+        button.textContent = playing ? "pause" : "play";
+        button.classList.toggle("playing");
+        const event = new CustomEvent("togglePlay", {
+            detail: { playing },
         });
+        document.dispatchEvent(event);
+    }
+
+    document.getElementById("togglePlay").addEventListener("click", togglePlay);
+
+    document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+            e.preventDefault();
+            togglePlay();
+        }
+    });
 
     function updateDimensionSliderValue(slider) {
         slider.setAttribute("data-value", slider.value);
@@ -129,6 +190,16 @@ import "../styles/styles.css"; /* Import the CSS file */
         document.dispatchEvent(event);
     }
 
+    function setMuteFace(checkbox) {
+        const facePosition = checkbox.parentElement.parentElement.id
+            .split("-")[1]
+            .toUpperCase();
+        const event = new CustomEvent("setMuteFace", {
+            detail: { facePosition, muted: checkbox.checked },
+        });
+        document.dispatchEvent(event);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const slider = document.getElementById("dimension");
         if (slider instanceof HTMLInputElement) {
@@ -143,9 +214,7 @@ import "../styles/styles.css"; /* Import the CSS file */
         }
     });
 
-    // Update the legend with the data from Cube.astro
     document.addEventListener("updateLegend", (event) => {
-        // No type assertion here
         const legendData = event.detail.legendData;
         legendData.forEach((face) => {
             const legendItem = document.getElementById(

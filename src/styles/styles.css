@@ -15,17 +15,6 @@ body {
     flex-shrink: 0;
 }
 
-/* #sidebar::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 0;
-    width: 2px;
-    height: 50%;
-    background: white;
-    transform: translateY(-50%);
-} */
-
 #sidebar .form-group {
     display: flex;
     align-items: center;
@@ -151,9 +140,10 @@ input[type="range"]::-ms-thumb {
     margin: 0 10px;
 }
 
-#randomUpdateRate {
+input[type="checkbox"] {
     width: 20px;
     height: 20px;
+    margin: 0;
     background-color: white;
     border: 1px solid #ccc;
     appearance: none;
@@ -161,9 +151,14 @@ input[type="range"]::-ms-thumb {
     -moz-appearance: none;
 }
 
-#randomUpdateRate:checked {
-    background-color: #000;
+#randomUpdateRate {
+    margin: 5px;
 }
+
+input[type="checkbox"]:checked {
+    background-color: black;
+}
+
 
 #instructions {
     width: 200px;
@@ -206,16 +201,23 @@ input[type="range"]::-ms-thumb {
     align-items: center;
 }
 
+.legend-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 1em;
+}
 
-.legend-item {
-    display: flex;
-    align-items: center;
+.legend-header th,
+.legend-item td {
+    margin: 0px 0px 5px 0px;
+    text-align: left;
+    vertical-align: middle;
 }
 
 .color-box {
     width: 20px;
     height: 20px;
-    margin-right: 10px;
+    display: inline-block;
 }
 
 #citation {
