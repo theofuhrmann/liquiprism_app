@@ -16,11 +16,11 @@ import "../styles/styles.css";
             id="dimension"
             name="dimension"
             min="1"
-            max="20"
+            max="21"
             value="7"
             oninput="updateDimensionSliderValue(this)"
         />
-        <span id="maxValue">20</span>
+        <span id="maxValue">21</span>
     </div>
 
     <label for="speed">speed:</label>
@@ -33,6 +33,7 @@ import "../styles/styles.css";
             min="0.5"
             max="5"
             value="1"
+            step="0.5"
             oninput="updateSpeedSliderValue(this)"
         />
         <span id="maxValue">5x</span>
@@ -58,8 +59,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-front">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -71,8 +72,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-back">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -84,8 +85,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-left">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -97,8 +98,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-right">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -110,8 +111,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-top">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -123,8 +124,8 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-bottom">
                 <td class="color-box"></td>
-                <td class="update-rate">0</td>
-                <td class="instrument">sine</td>
+                <td class="update-rate"></td>
+                <td class="instrument"></td>
                 <td>
                     <input
                         type="checkbox"
@@ -201,20 +202,18 @@ import "../styles/styles.css";
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        const slider = document.getElementById("dimension");
-        if (slider instanceof HTMLInputElement) {
-            updateDimensionSliderValue(slider);
+        const dimension_slider = document.getElementById("dimension");
+        if (dimension_slider instanceof HTMLInputElement) {
+            updateDimensionSliderValue(dimension_slider);
+        }
+
+        const speed_slider = document.getElementById("speed");
+        if (speed_slider instanceof HTMLInputElement) {
+            updateSpeedSliderValue(speed_slider);
         }
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const slider = document.getElementById("speed");
-        if (slider instanceof HTMLInputElement) {
-            updateSpeedSliderValue(slider);
-        }
-    });
-
-    document.addEventListener("updateLegend", (event) => {
+    document.addEventListener("updateLegendVisualizer", (event) => {
         const legendData = event.detail.legendData;
         legendData.forEach((face) => {
             const legendItem = document.getElementById(
@@ -225,6 +224,21 @@ import "../styles/styles.css";
                     face.color;
                 legendItem.querySelector(".update-rate").textContent =
                     `${face.updateRate}`;
+            }
+        });
+    });
+
+    document.addEventListener("updateLegendSonifier", (event) => {
+        const legendData = event.detail.legendData;
+        legendData.forEach((data) => {
+            const legendItem = document.getElementById(
+                `legend-${data.position}`,
+            );
+            if (legendItem) {
+                legendItem.querySelector(".instrument").textContent =
+                    `${data.instrument}`;
+            } else {
+                console.log("no legend item found");
             }
         });
     });

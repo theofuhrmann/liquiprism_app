@@ -158,7 +158,7 @@ export function updateCells(liquiprism: Liquiprism, faceCellMeshes: THREE.Mesh[]
     });
 }
 
-export function updateLegend(liquiprism: Liquiprism, FACE_TINTS: Record<number, [number, number, number]>) {
+export function updateLegendVisualizer(liquiprism: Liquiprism, FACE_TINTS: Record<number, [number, number, number]>) {
     const legendData = liquiprism.faces.map(face => {
         const [rTint, gTint, bTint] = FACE_TINTS[face.position];
         return {
@@ -167,7 +167,7 @@ export function updateLegend(liquiprism: Liquiprism, FACE_TINTS: Record<number, 
             updateRate: face.updateRate,
         };
     });
-    const event = new CustomEvent("updateLegend", { detail: { legendData } });
+    const event = new CustomEvent("updateLegendVisualizer", { detail: { legendData } });
     document.dispatchEvent(event);
 }
 

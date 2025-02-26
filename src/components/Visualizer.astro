@@ -11,7 +11,7 @@
   import { setupThree } from "../scripts/threeSetup.ts";
   import {
     createLiquiprismMeshes,
-    updateLegend,
+    updateLegendVisualizer,
     updateFrontmostFace,
     updateCells,
     updateRotation,
@@ -66,7 +66,7 @@
       faceCellMeshes = meshes;
       faceGroups = groups;
       updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
-      updateLegend(liquiprism, FACE_TINTS);
+      updateLegendVisualizer(liquiprism, FACE_TINTS);
       sonifier = new Sonifier(liquiprism);
     }
 
