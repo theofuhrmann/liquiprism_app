@@ -1,48 +1,20 @@
-# Astro Starter Kit: Basics
+# Liquiprism
 
-```sh
-npm create astro@latest -- --template basics
-```
+Liquiprism is an experimental web application that uses cellular automata to generate polyrhythms and visualizations. It leverages [Astro](https://astro.build/) for its project framework, [Three.js](https://threejs.org/) for 3D rendering, and the Web Audio API for sound synthesis. 
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+The project is designed to provide a creative tool for musicians and composers to explore new sonic possibilities.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Features
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+- **Cellular Automata**: Render dynamic, grid-based cellular automata on different faces.
+- **3D Visualization**: Visualize the automata with interactive 3D views using Three.js (see [`src/components/Visualizer.astro`](src/components/Visualizer.astro), ).
+- **Audio Sonification**: Generate polyrhythms and soundscapes based on the automata state (see [`src/scripts/sonifier.ts`](src/scripts/sonifier.ts)).
+- **Interactivity**: Control animation, rotation, and sound properties through an intuitive sidebar (see [`src/components/Sidebar.astro`](src/components/Sidebar.astro)).
 
-## 🚀 Project Structure
+## License
 
-Inside of your Astro project, you'll see the following folders and files:
+This project is provided as-is for experimental and educational purposes.
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Acknowledgments
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Inspired by Dorin, Alan. "LiquiPrism: Generating polyrhythms with cellular automata." _Proceedings of the 2002 International Conference on Auditory Display, Kyoto, Japan, July 2._ Vol. 5. 2002.
