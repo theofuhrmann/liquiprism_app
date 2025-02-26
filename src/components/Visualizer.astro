@@ -6,8 +6,8 @@
 
 <script>
   import * as THREE from "three";
-  import { Liquiprism } from "../scripts/liquiprism.ts";
-  // import { Sonifier } from "../scripts/sonifier.ts";
+  import { Liquiprism, FacePosition } from "../scripts/liquiprism.ts";
+  import { Sonifier } from "../scripts/sonifier.ts";
   import { setupThree } from "../scripts/threeSetup.ts";
   import {
     createLiquiprismMeshes,
@@ -53,7 +53,7 @@
 
     let speed = 1;
     let liquiprism = new Liquiprism(7, false);
-    // let sonifier = new Sonifier(liquiprism);
+    let sonifier: Sonifier;
     let faceCellMeshes: THREE.Mesh[][] = [];
     let faceGroups: THREE.Group[] = [];
 
@@ -67,6 +67,7 @@
       faceGroups = groups;
       updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
       updateLegend(liquiprism, FACE_TINTS);
+      sonifier = new Sonifier(liquiprism);
     }
 
     createLiquiprism();
@@ -76,7 +77,6 @@
       const dimension = customEvent.detail.dimension;
       liquiprism = new Liquiprism(dimension, liquiprism.random_update_rate);
       createLiquiprism();
-      // sonifier = new Sonifier(liquiprism);
     });
 
     document.addEventListener("speed", (event) => {
@@ -89,7 +89,6 @@
       const randomUpdateRate = customEvent.detail.randomUpdateRate;
       liquiprism = new Liquiprism(liquiprism.size, randomUpdateRate);
       createLiquiprism();
-      // sonifier = new Sonifier(liquiprism);
     });
 
     const keys: Record<string, boolean> = {};
@@ -106,7 +105,7 @@
       if (time - lastUpdate >= 1000 / speed) {
         liquiprism.step();
         updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
-        // sonifier.update();
+        sonifier.update();
         lastUpdate = time;
       }
 
@@ -187,6 +186,11 @@
       } else {
         pauseAnimation();
       }
+    });
+
+    document.addEventListener("setMuteFace", (event) => {
+      const { facePosition, muted } = (event as CustomEvent).detail;
+      sonifier.setMuteFace(facePosition, muted);
     });
 
     window.addEventListener("resize", () => {

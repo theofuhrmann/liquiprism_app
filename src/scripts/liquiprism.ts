@@ -14,7 +14,7 @@ export enum FacePosition {
     BOTTOM = 5
 }
 
-class Cell {
+export class Cell {
     face: Face;
     position: [number, number];
     isAlive: boolean;

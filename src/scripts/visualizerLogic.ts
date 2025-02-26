@@ -6,11 +6,6 @@ interface FaceMeshData {
     faceGroups: THREE.Group[];
 }
 
-interface LiquiprismParams {
-    size: number;
-    randomUpdate: boolean;
-}
-
 export function createLiquiprismMeshes(
     liquiprism: Liquiprism,
     scene: THREE.Group,
