@@ -27,6 +27,7 @@ body {
 
 #content {
     flex: 1;
+    flex-direction: column;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -227,6 +228,15 @@ input[type="checkbox"]:checked {
     right: 20px;
     color: white;
     font-family: monospace;
+}
+
+#copyright {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-family: monospace;
+    bottom: 20px;
 }
 
 .explainer {
