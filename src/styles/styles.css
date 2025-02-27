@@ -230,13 +230,27 @@ input[type="checkbox"]:checked {
     font-family: monospace;
 }
 
-#copyright {
+#personal-link {
     position: fixed;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    align-items: center;
     color: white;
     font-family: monospace;
-    bottom: 20px;
+}
+
+#personal-link a {
+    color: white;
+    text-decoration: none;
+    margin-left: 5px;
+}
+
+#personal-link:hover a,
+#personal-link:active a {
+    text-decoration: underline;
+
 }
 
 .explainer {
