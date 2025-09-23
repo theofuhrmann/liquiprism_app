@@ -241,6 +241,15 @@ input[type="checkbox"]:checked {
     font-family: monospace;
 }
 
+#citation a {
+    color: white;
+    text-decoration: none;
+}
+
+#citation a:hover {
+    text-decoration: underline;
+}
+
 #personal-link {
     position: fixed;
     bottom: 20px;
