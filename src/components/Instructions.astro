@@ -66,4 +66,59 @@ import "../styles/styles.css";
             }
         }
     });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const arrows = [
+            { element: document.getElementById("arrow-up"), key: "ArrowUp" },
+            {
+                element: document.getElementById("arrow-down"),
+                key: "ArrowDown",
+            },
+            {
+                element: document.getElementById("arrow-left"),
+                key: "ArrowLeft",
+            },
+            {
+                element: document.getElementById("arrow-right"),
+                key: "ArrowRight",
+            },
+        ];
+
+        let intervalId: number | null = null;
+
+        function startContinuousPress(key: string) {
+            if (intervalId) clearInterval(intervalId);
+
+            // Dispatch initial event
+            document.dispatchEvent(new KeyboardEvent("keydown", { key }));
+
+            // Continue dispatching
+            intervalId = setInterval(() => {
+                document.dispatchEvent(new KeyboardEvent("keydown", { key }));
+            }, 50);
+        }
+
+        function stopContinuousPress(key: string) {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            document.dispatchEvent(new KeyboardEvent("keyup", { key }));
+        }
+
+        arrows.forEach(({ element, key }) => {
+            if (element) {
+                element.style.cursor = "pointer";
+                element.addEventListener("mousedown", () =>
+                    startContinuousPress(key),
+                );
+                element.addEventListener("mouseup", () =>
+                    stopContinuousPress(key),
+                );
+                element.addEventListener("mouseleave", () =>
+                    stopContinuousPress(key),
+                );
+            }
+        });
+    });
 </script>
