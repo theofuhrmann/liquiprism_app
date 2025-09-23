@@ -85,6 +85,8 @@ export class Liquiprism {
     stepCounter: number;
     frontmostFace: Face;
     random_update_rate: boolean;
+    step_time: number;
+    facePositions: Map<FacePosition, Face>;
 
     constructor(size: number, random_update_rate: boolean = false) {
         const facePositions: FacePosition[] = [
@@ -109,6 +111,8 @@ export class Liquiprism {
         this.CELL_STATE_CHANGE_THRESHOLD = size ** 2;
         this.stepCounter = 0;
         this.frontmostFace = this.faces[0];
+        this.facePositions = new Map(facePositions.map(position => [position, this.getFace(position)]));
+        this.step_time = 1000;
     }
 
     initializeFaceMap(): Map<FacePosition, Map<RelativeFacePosition, FacePosition>> {

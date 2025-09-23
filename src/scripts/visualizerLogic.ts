@@ -114,6 +114,49 @@ export function updateFrontmostFace(
     liquiprism.frontmostFace = frontmostFace;
 }
 
+export function updateFacePositions(
+    liquiprism: Liquiprism,
+    faceCellMeshes: THREE.Mesh[][],
+    liquiprismGroup: THREE.Group,
+    camera: THREE.Camera
+) {
+    const faceCenters = liquiprism.faces.map((face) => {
+        const faceCenter = getFaceCenter(faceCellMeshes[face.position]);
+        return { face, faceCenter };
+    });
+
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    let frontmostFace = liquiprism.faces[0];
+
+    faceCenters.forEach(({ face, faceCenter }) => {
+        const faceDirection = new THREE.Vector3()
+            .subVectors(faceCenter, liquiprismGroup.position)
+            .normalize();
+
+        const dot = faceDirection.dot(cameraDirection);
+        if (dot > 0.5) {
+            liquiprism.facePositions.set(FacePosition.FRONT, face);
+            frontmostFace = face;
+        } else if (dot < -0.5) {
+            liquiprism.facePositions.set(FacePosition.BACK, face);
+        } else {
+            const cross = new THREE.Vector3().crossVectors(cameraDirection, faceDirection);
+            if (cross.y > 0.5) {
+                liquiprism.facePositions.set(FacePosition.LEFT, face);
+            } else if (cross.y < -0.5) {
+                liquiprism.facePositions.set(FacePosition.RIGHT, face);
+            } else if (cross.x > 0.5) {
+                liquiprism.facePositions.set(FacePosition.TOP, face);
+            } else if (cross.x < -0.5) {
+                liquiprism.facePositions.set(FacePosition.BOTTOM, face);
+            }
+        }
+    });
+    liquiprism.frontmostFace = frontmostFace;
+}
+
 export function updateRotation(keys: Record<string, boolean>, angle_x: number, angle_y: number, delta: number) {
     const rotationSpeed = 1;
     if (keys["ArrowUp"]) {

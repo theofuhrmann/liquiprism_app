@@ -6,13 +6,14 @@
 
 <script>
   import * as THREE from "three";
-  import { Liquiprism, FacePosition } from "../scripts/liquiprism.ts";
+  import { Liquiprism } from "../scripts/liquiprism.ts";
   import { Sonifier } from "../scripts/sonifier.ts";
   import { setupThree } from "../scripts/threeSetup.ts";
   import {
     createLiquiprismMeshes,
     updateLegendVisualizer,
     updateFrontmostFace,
+    updateFacePositions,
     updateCells,
     updateRotation,
     calculateFaceDepth,
@@ -31,7 +32,7 @@
       5: [0, 0, 255], // BOTTOM
     };
 
-    const vertices = [
+    const VERTEX_COORDINATES = [
       [-1, -1, -1],
       [1, -1, -1],
       [1, 1, -1],
@@ -51,7 +52,6 @@
       5: [0, 1, 5, 4], // BOTTOM
     };
 
-    let speed = 1;
     let liquiprism = new Liquiprism(7, false);
     let sonifier: Sonifier;
     let faceCellMeshes: THREE.Mesh[][] = [];
@@ -81,7 +81,7 @@
 
     document.addEventListener("speed", (event) => {
       const customEvent = event as CustomEvent;
-      speed = customEvent.detail.speed;
+      liquiprism.step_time = 1000 / customEvent.detail.speed;
     });
 
     document.addEventListener("randomUpdateRateChange", (event) => {
@@ -102,14 +102,14 @@
     });
 
     function updateCellsAndFrontmostFace(time: number) {
-      if (time - lastUpdate >= 1000 / speed) {
+      if (time - lastUpdate >= liquiprism.step_time) {
         liquiprism.step();
         updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
         sonifier.update();
         lastUpdate = time;
       }
 
-      const transformedVertices = vertices.map((vertex) => {
+      const transformedVertices = VERTEX_COORDINATES.map((vertex) => {
         const vector = new THREE.Vector3(vertex[0], vertex[1], vertex[2]);
         vector.applyMatrix4(liquiprismGroup.matrixWorld);
         return vector;
@@ -129,6 +129,7 @@
         }
       });
 
+      updateFacePositions(liquiprism, faceCellMeshes, liquiprismGroup, camera);
       updateFrontmostFace(liquiprism, faceCellMeshes, liquiprismGroup, camera);
     }
 
@@ -150,7 +151,6 @@
       if (rotationLastTime === null) {
         rotationLastTime = time;
       }
-      const t = time / 500;
       const delta = (time - rotationLastTime!) / 500;
       rotationLastTime = time;
 
