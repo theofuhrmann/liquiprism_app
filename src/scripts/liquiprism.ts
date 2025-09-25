@@ -234,7 +234,7 @@ export class Liquiprism {
         for (const face of this.faces) {
             if (this.stepCounter % face.updateRate === 0) {
                 for (const cell of face.cells) {
-                    this.applyRules(face, cell);
+                    this.applyRules(face, cell, true);
                 }
             }
         }
@@ -251,20 +251,22 @@ export class Liquiprism {
         this.stepCounter++;
     }
 
-    applyRules(face: Face, cell: Cell): void {
-        if (this.frontmostFace === face) {
-            cell.willBeAlive = this.applyStimulusRule(cell);
-        } else {
-            const neighbors = this.getCellNeighbors(face, cell);
-            const aliveNeighbors = neighbors.filter(neighbor => neighbor.isAlive).length;
-
-            if (this.activity < this.CELL_STATE_CHANGE_THRESHOLD) {
-                cell.willBeAlive = this.applyStochasticRule(cell, aliveNeighbors);
+    applyRules(face: Face, cell: Cell, random: boolean = false): void {
+        if (random) cell.willBeAlive = this.applyRandomRule(cell);
+        else {
+            if (this.frontmostFace === face) {
+                cell.willBeAlive = this.applyStimulusRule(cell);
             } else {
-                cell.willBeAlive = this.applyConventionalRule(cell, aliveNeighbors);
+                const neighbors = this.getCellNeighbors(face, cell);
+                const aliveNeighbors = neighbors.filter(neighbor => neighbor.isAlive).length;
+
+                if (this.activity < this.CELL_STATE_CHANGE_THRESHOLD) {
+                    cell.willBeAlive = this.applyStochasticRule(cell, aliveNeighbors);
+                } else {
+                    cell.willBeAlive = this.applyConventionalRule(cell, aliveNeighbors);
+                }
             }
         }
-
         cell.stimulated = cell.willBeAlive && !cell.isAlive;
         if (cell.stimulated) {
             this.activity++;
@@ -291,5 +293,9 @@ export class Liquiprism {
 
     applyStimulusRule(cell: Cell, activationProbability: number = 0.2): boolean {
         return cell.isAlive || Math.random() < activationProbability;
+    }
+
+    applyRandomRule(cell: Cell): boolean {
+        return Math.random() < 0.5;
     }
 }

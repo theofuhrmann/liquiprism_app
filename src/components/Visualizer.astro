@@ -91,6 +91,13 @@
       createLiquiprism();
     });
 
+    document.addEventListener("reverbChange", (event) => {
+      const { amount } = (event as CustomEvent).detail;
+      if (sonifier) {
+        sonifier.setReverb(amount);
+      }
+    });
+
     const keys: Record<string, boolean> = {};
 
     document.addEventListener("keydown", (event) => {

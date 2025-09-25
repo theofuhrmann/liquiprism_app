@@ -25,7 +25,10 @@ class Sonifier {
     private faceProperties: Map<FacePosition, FaceProperties>;
     private scaleType: ScaleType;
     private convolver: ConvolverNode;
-    private gainNode: GainNode;
+    private masterGain: GainNode;
+    private wetGain: GainNode;
+    private dryGain: GainNode;
+    private reverbAmount: number = 0.3;
     private pannerPool: PannerNode[] = [];
     private gainNodePool: GainNode[] = [];
     private compressor: DynamicsCompressorNode;
@@ -41,15 +44,21 @@ class Sonifier {
         this.convolver = this.audioContext.createConvolver();
         this.convolver.buffer = this.createImpulseResponse(3, 2, false);
 
-        this.gainNode = this.audioContext.createGain();
-        this.gainNode.gain.value = 0.1;
+        this.wetGain = this.audioContext.createGain();
+        this.dryGain = this.audioContext.createGain();
+        this.masterGain = this.audioContext.createGain();
+        this.masterGain.gain.value = 0.1;
 
         this.compressor = this.audioContext.createDynamicsCompressor();
         this.configureCompressor();
 
-        this.convolver.connect(this.gainNode);
-        this.gainNode.connect(this.compressor);
+        this.convolver.connect(this.wetGain);
+        this.wetGain.connect(this.masterGain);
+        this.dryGain.connect(this.masterGain);
+        this.masterGain.connect(this.compressor);
         this.compressor.connect(this.audioContext.destination);
+
+        this.setReverb(this.reverbAmount);
 
         this.updateLegendSonifier();
 
@@ -203,7 +212,9 @@ class Sonifier {
 
         this.configureInstrument(oscillator, gainNode, properties.instrument, pitch);
 
-        oscillator.connect(gainNode).connect(panner).connect(this.convolver);
+        oscillator.connect(gainNode).connect(panner);
+        panner.connect(this.dryGain);
+        panner.connect(this.convolver);
         oscillator.start();
         oscillator.stop(this.audioContext.currentTime + this.getDuration(properties.instrument));
 
@@ -255,7 +266,7 @@ class Sonifier {
                 oscillator.type = "sine";
                 this.configureDrumEnvelope(gainNode);
                 break;
-            default: // Sine
+            default:
                 oscillator.type = "sine";
                 this.configureSineEnvelope(gainNode);
         }
@@ -279,8 +290,8 @@ class Sonifier {
     }
 
     private releaseResources(gainNode: GainNode, panner: PannerNode): void {
-        gainNode.disconnect();
-        panner.disconnect();
+        try { gainNode.disconnect(); } catch { }
+        try { panner.disconnect(); } catch { }
         this.gainNodePool.push(gainNode);
         this.pannerPool.push(panner);
     }
@@ -301,6 +312,15 @@ class Sonifier {
                 });
             }
         }
+    }
+
+    public setReverb(amount: number): void {
+        const a = Math.max(0, Math.min(1, amount));
+        this.reverbAmount = a;
+        const wet = Math.sin(a * Math.PI / 2);
+        const dry = Math.cos(a * Math.PI / 2);
+        this.wetGain.gain.setValueAtTime(wet, this.audioContext.currentTime);
+        this.dryGain.gain.setValueAtTime(dry, this.audioContext.currentTime);
     }
 
     public updateLegendSonifier() {

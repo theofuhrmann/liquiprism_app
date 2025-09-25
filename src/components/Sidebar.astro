@@ -137,6 +137,21 @@ import "../styles/styles.css";
             </tr>
         </table>
     </div>
+    <label for="reverb" style="margin-top: 8px">reverb:</label>
+    <div class="slider-container">
+        <span>dry</span>
+        <input
+            type="range"
+            id="reverb"
+            name="reverb"
+            min="0"
+            max="1"
+            value="0.3"
+            step="0.05"
+            oninput="updateReverb(this)"
+        />
+        <span>wet</span>
+    </div>
     <div class="explainer">
         <p>c: color</p>
         <p>r: update rate</p>
@@ -191,6 +206,13 @@ import "../styles/styles.css";
         document.dispatchEvent(event);
     }
 
+    function updateReverb(slider) {
+        const event = new CustomEvent("reverbChange", {
+            detail: { amount: parseFloat(slider.value) },
+        });
+        document.dispatchEvent(event);
+    }
+
     function setMuteFace(checkbox) {
         const facePosition = checkbox.parentElement.parentElement.id
             .split("-")[1]
@@ -210,6 +232,11 @@ import "../styles/styles.css";
         const speed_slider = document.getElementById("speed");
         if (speed_slider instanceof HTMLInputElement) {
             updateSpeedSliderValue(speed_slider);
+        }
+
+        const reverb_slider = document.getElementById("reverb");
+        if (reverb_slider instanceof HTMLInputElement) {
+            updateReverb(reverb_slider);
         }
     });
 
