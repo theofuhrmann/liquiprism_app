@@ -56,6 +56,8 @@
     let sonifier: Sonifier;
     let faceCellMeshes: THREE.Mesh[][] = [];
     let faceGroups: THREE.Group[] = [];
+    let lastReverbAmount = 0.3;
+    let lastVolumeAmount = 0.1;
 
     const liquiprismGroup = new THREE.Group();
     scene.add(liquiprismGroup);
@@ -68,6 +70,8 @@
       updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
       updateLegendVisualizer(liquiprism, FACE_TINTS);
       sonifier = new Sonifier(liquiprism);
+      sonifier.setReverb(lastReverbAmount);
+      sonifier.setVolume(lastVolumeAmount);
     }
 
     createLiquiprism();
@@ -93,8 +97,17 @@
 
     document.addEventListener("reverbChange", (event) => {
       const { amount } = (event as CustomEvent).detail;
+      lastReverbAmount = amount;
       if (sonifier) {
         sonifier.setReverb(amount);
+      }
+    });
+
+    document.addEventListener("volumeChange", (event) => {
+      const { amount } = (event as CustomEvent).detail;
+      lastVolumeAmount = amount;
+      if (sonifier) {
+        sonifier.setVolume(amount);
       }
     });
 
