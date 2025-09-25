@@ -38,7 +38,7 @@ class Sonifier {
         this.liquiprism = liquiprism;
         this.audioContext = new AudioContext();
         this.oscillators = new Map();
-        this.noteThreshold = 5;
+        this.noteThreshold = 3;
         this.scaleType = scaleType;
         this.faceProperties = this.initializeFaceProperties();
 

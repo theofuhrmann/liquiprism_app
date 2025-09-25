@@ -163,7 +163,7 @@ export function updateFacePositions(
 }
 
 export function updateRotation(keys: Record<string, boolean>, angle_x: number, angle_y: number, delta: number) {
-    const rotationSpeed = 1;
+    const rotationSpeed = 2.5;
     if (keys["ArrowUp"]) {
         angle_x -= rotationSpeed * delta;
     }
