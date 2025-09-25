@@ -234,7 +234,7 @@ export class Liquiprism {
         for (const face of this.faces) {
             if (this.stepCounter % face.updateRate === 0) {
                 for (const cell of face.cells) {
-                    this.applyRules(face, cell, true);
+                    this.applyRules(face, cell);
                 }
             }
         }
@@ -252,7 +252,7 @@ export class Liquiprism {
     }
 
     applyRules(face: Face, cell: Cell, random: boolean = false): void {
-        if (random) cell.willBeAlive = this.applyRandomRule(cell);
+        if (random) cell.willBeAlive = this.applyRandomRule();
         else {
             if (this.frontmostFace === face) {
                 cell.willBeAlive = this.applyStimulusRule(cell);
@@ -295,7 +295,7 @@ export class Liquiprism {
         return cell.isAlive || Math.random() < activationProbability;
     }
 
-    applyRandomRule(cell: Cell): boolean {
+    applyRandomRule(): boolean {
         return Math.random() < 0.5;
     }
 }
