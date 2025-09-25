@@ -6,7 +6,7 @@
 
 <script>
   import * as THREE from "three";
-  import { Liquiprism } from "../scripts/liquiprism.ts";
+  import { Liquiprism, FacePosition } from "../scripts/liquiprism.ts";
   import { Sonifier } from "../scripts/sonifier.ts";
   import { setupThree } from "../scripts/threeSetup.ts";
   import {
@@ -97,6 +97,12 @@
       const randomUpdateRate = customEvent.detail.randomUpdateRate;
       liquiprism = new Liquiprism(liquiprism.size, randomUpdateRate);
       createLiquiprism();
+    });
+
+    document.addEventListener("faceUpdateRateChange", (event) => {
+      const { facePosition, updateRate } = (event as CustomEvent).detail;
+      const facePositionEnum = FacePosition[facePosition as keyof typeof FacePosition];
+      liquiprism.setFaceUpdateRate(facePositionEnum, updateRate);
     });
 
     document.addEventListener("reverbChange", (event) => {
@@ -200,6 +206,9 @@
     function startAnimation() {
       if (!animationFrameId) {
         animateCells(0);
+        if (sonifier) {
+          sonifier.setVolume(lastVolumeAmount);
+        }
       }
     }
 
@@ -216,6 +225,7 @@
         startAnimation();
       } else {
         pauseAnimation();
+        if (sonifier) sonifier.stopAll(true);
       }
     });
 

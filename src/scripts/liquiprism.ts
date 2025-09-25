@@ -100,13 +100,17 @@ export class Liquiprism {
         ];
         this.size = size;
         this.random_update_rate = random_update_rate;
-        this.faces = facePositions.map(position =>
-            new Face(
-                position,
-                size,
-                random_update_rate ? Math.floor(Math.random() * 3) + 1 : 1
-            )
-        );
+        this.faces = facePositions.map(position => {
+            let updateRate = 1;
+            if (random_update_rate) {
+                updateRate = Math.floor(Math.random() * 3) + 1;
+            } else {
+                if (position === FacePosition.BOTTOM) updateRate = 4;
+                else if (position === FacePosition.FRONT) updateRate = 2;
+                else updateRate = 1;
+            }
+            return new Face(position, size, updateRate);
+        });
         this.faceMap = this.initializeFaceMap();
         this.activity = 0;
         this.CELL_STATE_CHANGE_THRESHOLD = size ** 2;
@@ -160,6 +164,11 @@ export class Liquiprism {
 
     getFace(facePosition: FacePosition): Face {
         return this.faces.find(face => face.position === facePosition)!;
+    }
+
+    setFaceUpdateRate(facePosition: FacePosition, updateRate: number): void {
+        const face = this.getFace(facePosition);
+        face.updateRate = Math.max(1, Math.min(4, updateRate));
     }
 
     getCellNeighbors(face: Face, cell: Cell): Cell[] {

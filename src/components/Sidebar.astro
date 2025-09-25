@@ -59,7 +59,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-front">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('front', this.value)">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -72,7 +79,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-back">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('back', this.value)">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -85,7 +99,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-left">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('left', this.value)">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -98,7 +119,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-right">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('right', this.value)">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -111,7 +139,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-top">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('top', this.value)">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -124,7 +159,14 @@ import "../styles/styles.css";
             </tr>
             <tr class="legend-item" id="legend-bottom">
                 <td class="color-box"></td>
-                <td class="update-rate"></td>
+                <td class="update-rate">
+                    <select onchange="setFaceUpdateRate('bottom', this.value)">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4" selected>4</option>
+                    </select>
+                </td>
                 <td class="instrument"></td>
                 <td>
                     <input
@@ -245,6 +287,16 @@ import "../styles/styles.css";
         document.dispatchEvent(event);
     }
 
+    function setFaceUpdateRate(facePosition, updateRate) {
+        const event = new CustomEvent("faceUpdateRateChange", {
+            detail: {
+                facePosition: facePosition.toUpperCase(),
+                updateRate: parseInt(updateRate),
+            },
+        });
+        document.dispatchEvent(event);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const dimension_slider = document.getElementById("dimension");
         if (dimension_slider instanceof HTMLInputElement) {
@@ -276,8 +328,12 @@ import "../styles/styles.css";
             if (legendItem) {
                 legendItem.querySelector(".color-box").style.backgroundColor =
                     face.color;
-                legendItem.querySelector(".update-rate").textContent =
-                    `${face.updateRate}`;
+                const dropdown = legendItem.querySelector(
+                    ".update-rate select",
+                );
+                if (dropdown) {
+                    dropdown.value = face.updateRate.toString();
+                }
             }
         });
     });
