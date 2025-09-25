@@ -29,6 +29,7 @@ class Sonifier {
     private wetGain: GainNode;
     private dryGain: GainNode;
     private reverbAmount: number = 0.3;
+    private volumeAmount: number = 0.1;
     private pannerPool: PannerNode[] = [];
     private gainNodePool: GainNode[] = [];
     private compressor: DynamicsCompressorNode;
@@ -47,7 +48,7 @@ class Sonifier {
         this.wetGain = this.audioContext.createGain();
         this.dryGain = this.audioContext.createGain();
         this.masterGain = this.audioContext.createGain();
-        this.masterGain.gain.value = 0.1;
+        this.masterGain.gain.value = this.volumeAmount;
 
         this.compressor = this.audioContext.createDynamicsCompressor();
         this.configureCompressor();
@@ -59,6 +60,7 @@ class Sonifier {
         this.compressor.connect(this.audioContext.destination);
 
         this.setReverb(this.reverbAmount);
+        this.setVolume(this.volumeAmount);
 
         this.updateLegendSonifier();
 
@@ -321,6 +323,12 @@ class Sonifier {
         const dry = Math.cos(a * Math.PI / 2);
         this.wetGain.gain.setValueAtTime(wet, this.audioContext.currentTime);
         this.dryGain.gain.setValueAtTime(dry, this.audioContext.currentTime);
+    }
+
+    public setVolume(amount: number): void {
+        const a = Math.max(0, Math.min(1, amount));
+        this.volumeAmount = a;
+        this.masterGain.gain.setValueAtTime(a, this.audioContext.currentTime);
     }
 
     public updateLegendSonifier() {

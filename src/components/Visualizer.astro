@@ -98,6 +98,13 @@
       }
     });
 
+    document.addEventListener("volumeChange", (event) => {
+      const { amount } = (event as CustomEvent).detail;
+      if (sonifier) {
+        sonifier.setVolume(amount);
+      }
+    });
+
     const keys: Record<string, boolean> = {};
 
     document.addEventListener("keydown", (event) => {

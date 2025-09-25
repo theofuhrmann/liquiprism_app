@@ -137,6 +137,21 @@ import "../styles/styles.css";
             </tr>
         </table>
     </div>
+    <label for="volume" style="margin-top: 8px">volume:</label>
+    <div class="slider-container">
+        <span>0</span>
+        <input
+            type="range"
+            id="volume"
+            name="volume"
+            min="0"
+            max="1"
+            value="0.1"
+            step="0.01"
+            oninput="updateVolume(this)"
+        />
+        <span>1</span>
+    </div>
     <label for="reverb" style="margin-top: 8px">reverb:</label>
     <div class="slider-container">
         <span>dry</span>
@@ -206,6 +221,13 @@ import "../styles/styles.css";
         document.dispatchEvent(event);
     }
 
+    function updateVolume(slider) {
+        const event = new CustomEvent("volumeChange", {
+            detail: { amount: parseFloat(slider.value) },
+        });
+        document.dispatchEvent(event);
+    }
+
     function updateReverb(slider) {
         const event = new CustomEvent("reverbChange", {
             detail: { amount: parseFloat(slider.value) },
@@ -237,6 +259,11 @@ import "../styles/styles.css";
         const reverb_slider = document.getElementById("reverb");
         if (reverb_slider instanceof HTMLInputElement) {
             updateReverb(reverb_slider);
+        }
+
+        const volume_slider = document.getElementById("volume");
+        if (volume_slider instanceof HTMLInputElement) {
+            updateVolume(volume_slider);
         }
     });
 
