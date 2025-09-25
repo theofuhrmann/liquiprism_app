@@ -58,6 +58,7 @@
     let faceGroups: THREE.Group[] = [];
     let lastReverbAmount = 0.3;
     let lastVolumeAmount = 0.1;
+    let lastSpeed = 1;
 
     const liquiprismGroup = new THREE.Group();
     scene.add(liquiprismGroup);
@@ -67,6 +68,8 @@
         createLiquiprismMeshes(liquiprism, liquiprismGroup, FACE_TINTS);
       faceCellMeshes = meshes;
       faceGroups = groups;
+      liquiprism.step_time = 1000 / lastSpeed;
+
       updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
       updateLegendVisualizer(liquiprism, FACE_TINTS);
       sonifier = new Sonifier(liquiprism);
@@ -85,7 +88,8 @@
 
     document.addEventListener("speed", (event) => {
       const customEvent = event as CustomEvent;
-      liquiprism.step_time = 1000 / customEvent.detail.speed;
+      lastSpeed = Number(customEvent.detail.speed) || 1;
+      liquiprism.step_time = 1000 / lastSpeed;
     });
 
     document.addEventListener("randomUpdateRateChange", (event) => {
