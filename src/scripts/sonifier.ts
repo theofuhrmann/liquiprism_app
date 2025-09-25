@@ -26,6 +26,8 @@ class Sonifier {
     private scaleType: ScaleType;
     private convolver: ConvolverNode;
     private gainNode: GainNode;
+    private pannerPool: PannerNode[] = [];
+    private gainNodePool: GainNode[] = [];
     private compressor: DynamicsCompressorNode;
 
     constructor(liquiprism: Liquiprism, scaleType: ScaleType = ScaleType.Major) {
@@ -37,17 +39,13 @@ class Sonifier {
         this.faceProperties = this.initializeFaceProperties();
 
         this.convolver = this.audioContext.createConvolver();
-        this.convolver.buffer = this.createImpulseResponse(2, 2, true);
+        this.convolver.buffer = this.createImpulseResponse(3, 2, false);
 
         this.gainNode = this.audioContext.createGain();
         this.gainNode.gain.value = 0.1;
 
         this.compressor = this.audioContext.createDynamicsCompressor();
-        this.compressor.threshold.setValueAtTime(-50, this.audioContext.currentTime);
-        this.compressor.knee.setValueAtTime(40, this.audioContext.currentTime);
-        this.compressor.ratio.setValueAtTime(12, this.audioContext.currentTime);
-        this.compressor.attack.setValueAtTime(0, this.audioContext.currentTime);
-        this.compressor.release.setValueAtTime(0.25, this.audioContext.currentTime);
+        this.configureCompressor();
 
         this.convolver.connect(this.gainNode);
         this.gainNode.connect(this.compressor);
@@ -57,19 +55,23 @@ class Sonifier {
 
     }
 
+    private configureCompressor(): void {
+        this.compressor.threshold.setValueAtTime(-50, this.audioContext.currentTime);
+        this.compressor.knee.setValueAtTime(40, this.audioContext.currentTime);
+        this.compressor.ratio.setValueAtTime(12, this.audioContext.currentTime);
+        this.compressor.attack.setValueAtTime(0, this.audioContext.currentTime);
+        this.compressor.release.setValueAtTime(0.25, this.audioContext.currentTime);
+    }
+
 
     private initializeFaceProperties(): Map<FacePosition, FaceProperties> {
         const basePitches = new Map<FacePosition, number>([
-            [FacePosition.BOTTOM, 24],
-            [FacePosition.TOP, 84],
-            [FacePosition.FRONT, 48],
-            [FacePosition.BACK, 60],
-            [FacePosition.LEFT, 36],
-            [FacePosition.RIGHT, 72],
+            [FacePosition.BOTTOM, 24], [FacePosition.TOP, 84],
+            [FacePosition.FRONT, 48], [FacePosition.BACK, 60],
+            [FacePosition.LEFT, 36], [FacePosition.RIGHT, 72],
         ]);
 
         const faceProperties = new Map<FacePosition, FaceProperties>();
-
         basePitches.forEach((basePitch, facePosition) => {
             faceProperties.set(facePosition, {
                 muted: false,
@@ -96,22 +98,17 @@ class Sonifier {
         return impulse;
     }
 
+    private getScaleIntervals(): number[] {
+        return {
+            [ScaleType.Major]: [0, 2, 4, 5, 7, 9, 11],
+            [ScaleType.Minor]: [0, 2, 3, 5, 7, 8, 10],
+            [ScaleType.Blues]: [0, 3, 5, 6, 7, 10]
+        }[this.scaleType];
+    }
+
     private createPitchGrid(basePitch: number): number[][] {
+        const intervals = this.getScaleIntervals();
         const pitchGrid: number[][] = [];
-
-        const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
-        const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
-        const bluesScaleIntervals = [0, 3, 5, 6, 7, 10];
-
-        let intervals: number[];
-        if (this.scaleType === ScaleType.Minor) {
-            intervals = minorScaleIntervals;
-        } else if (this.scaleType === ScaleType.Blues) {
-            intervals = bluesScaleIntervals;
-        } else {
-            intervals = majorScaleIntervals;
-        }
-
         const intervalLength = intervals.length;
 
         for (let row = 0; row < this.liquiprism.size; row++) {
@@ -173,75 +170,18 @@ class Sonifier {
                 if (cell.stimulated) {
                     note_candidates.push([cell, pitch]);
                 } else {
-                    this.playNoteOff(facePosition, cell);
+                    this.stopNote(facePosition, cell);
                 }
             }
         }
 
         const notes = this.getNotes(note_candidates);
         notes.forEach(([cell, pitch]) => {
-            this.playNoteOn(facePosition, cell, pitch);
+            this.playNote(facePosition, cell, pitch);
         });
     }
 
-    private midiToFrequency(note: number): number {
-        return 440 * Math.pow(2, (note - 69) / 12);
-    }
-
-    private playNoteOn(facePosition: FacePosition, cell: Cell, pitch: number, duration: number = 0.25): void {
-        const properties = this.faceProperties.get(facePosition);
-        const instrument = properties?.instrument;
-
-        if (instrument === Instrument.Drums) {
-            // Create a percussive sound using a noise buffer
-            const bufferSize = this.audioContext.sampleRate * duration;
-            const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-            const data = buffer.getChannelData(0);
-
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1; // White noise
-            }
-
-            const noise = this.audioContext.createBufferSource();
-            noise.buffer = buffer;
-
-            const gainNode = this.audioContext.createGain();
-            gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-
-            noise.connect(gainNode);
-            gainNode.connect(this.convolver);
-            noise.start();
-            noise.stop(this.audioContext.currentTime + duration);
-
-            if (!this.oscillators.has(facePosition)) {
-                this.oscillators.set(facePosition, new Map());
-            }
-            this.oscillators.get(facePosition)?.set(cell, noise);
-        } else {
-            const oscillator = this.audioContext.createOscillator();
-            oscillator.type = "sine"; // You can change the type to "square", "sawtooth", "triangle"
-            oscillator.frequency.setValueAtTime(this.midiToFrequency(pitch), this.audioContext.currentTime);
-
-            const gainNode = this.audioContext.createGain();
-            gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(this.convolver);
-            oscillator.start();
-            oscillator.stop(this.audioContext.currentTime + duration);
-
-            if (!this.oscillators.has(facePosition)) {
-                this.oscillators.set(facePosition, new Map());
-            }
-            this.oscillators.get(facePosition)?.set(cell, oscillator);
-        }
-
-    }
-
-
-    private playNoteOff(facePosition: FacePosition, cell: Cell): void {
+    private stopNote(facePosition: FacePosition, cell: Cell): void {
         const face_oscillators = this.oscillators.get(facePosition) as Map<Cell, AudioBufferSourceNode | OscillatorNode>;
         if (face_oscillators) {
             const oscillator = face_oscillators.get(cell);
@@ -253,6 +193,102 @@ class Sonifier {
         }
     }
 
+    private playNote(facePosition: FacePosition, cell: Cell, pitch: number): void {
+        const properties = this.faceProperties.get(facePosition);
+        if (!properties) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.getGainNode();
+        const panner = this.getPannerNode(facePosition);
+
+        this.configureInstrument(oscillator, gainNode, properties.instrument, pitch);
+
+        oscillator.connect(gainNode).connect(panner).connect(this.convolver);
+        oscillator.start();
+        oscillator.stop(this.audioContext.currentTime + this.getDuration(properties.instrument));
+
+        oscillator.onended = () => {
+            this.releaseResources(gainNode, panner);
+        };
+    }
+
+    private getGainNode(): GainNode {
+        return this.gainNodePool.pop() || this.audioContext.createGain();
+    }
+
+    private getPannerNode(facePosition: FacePosition): PannerNode {
+        const panner = this.pannerPool.pop() || this.audioContext.createPanner();
+        panner.panningModel = "HRTF";
+        const faceCenter = this.liquiprism.faceCenters.get(facePosition);
+        if (faceCenter) {
+            if ('positionX' in panner) {
+                panner.positionX.setValueAtTime(faceCenter.x, this.audioContext.currentTime);
+                panner.positionY.setValueAtTime(faceCenter.y, this.audioContext.currentTime);
+                panner.positionZ.setValueAtTime(faceCenter.z, this.audioContext.currentTime);
+            } else if ((panner as any).setPosition) {
+                (panner as any).setPosition(faceCenter.x, faceCenter.y, faceCenter.z);
+            }
+        } else {
+            // Fallback to default position if face center not yet calculated
+            if ('positionX' in panner) {
+                panner.positionX.setValueAtTime(0, this.audioContext.currentTime);
+                panner.positionY.setValueAtTime(0, this.audioContext.currentTime);
+                panner.positionZ.setValueAtTime(0, this.audioContext.currentTime);
+            } else if ((panner as any).setPosition) {
+                (panner as any).setPosition(0, 0, 0);
+            }
+        }
+        return panner;
+    }
+
+    private configureInstrument(
+        oscillator: OscillatorNode,
+        gainNode: GainNode,
+        instrument: Instrument,
+        pitch: number
+    ): void {
+        const frequency = this.midiToFrequency(pitch);
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+        switch (instrument) {
+            case Instrument.Drums:
+                oscillator.type = "sine";
+                this.configureDrumEnvelope(gainNode);
+                break;
+            default: // Sine
+                oscillator.type = "sine";
+                this.configureSineEnvelope(gainNode);
+        }
+    }
+
+    private configureDrumEnvelope(gainNode: GainNode): void {
+        gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.25);
+    }
+
+    private configureSineEnvelope(gainNode: GainNode): void {
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+    }
+
+    private getDuration(instrument: Instrument): number {
+        return {
+            [Instrument.Drums]: 0.25,
+            [Instrument.Sine]: 0.5
+        }[instrument];
+    }
+
+    private releaseResources(gainNode: GainNode, panner: PannerNode): void {
+        gainNode.disconnect();
+        panner.disconnect();
+        this.gainNodePool.push(gainNode);
+        this.pannerPool.push(panner);
+    }
+
+    private midiToFrequency(note: number): number {
+        return 440 * Math.pow(2, (note - 69) / 12);
+    }
+
     public setMuteFace(facePosition: FacePosition, mute: boolean): void {
         facePosition = FacePosition[facePosition as unknown as keyof typeof FacePosition]
         const properties = this.faceProperties.get(facePosition);
@@ -261,7 +297,7 @@ class Sonifier {
             if (mute) {
                 const face = this.liquiprism.getFace(facePosition);
                 face.cells.forEach((cell) => {
-                    this.playNoteOff(facePosition, cell);
+                    this.stopNote(facePosition, cell);
                 });
             }
         }

@@ -122,6 +122,11 @@ export function updateFacePositions(
 ) {
     const faceCenters = liquiprism.faces.map((face) => {
         const faceCenter = getFaceCenter(faceCellMeshes[face.position]);
+        liquiprism.faceCenters.set(face.position as FacePosition, {
+            x: faceCenter.x,
+            y: faceCenter.y,
+            z: faceCenter.z
+        });
         return { face, faceCenter };
     });
 
