@@ -1,4 +1,11 @@
 import { Liquiprism, Face, FacePosition, Cell } from "./liquiprism";
+import type { InstrumentAPI, InstrumentContext } from "./instruments/types";
+import { BassInstrument } from "./instruments/bass";
+import { SineInstrument } from "./instruments/sine";
+import { LowDrumsInstrument } from "./instruments/lowDrums";
+import { HighDrumsInstrument } from "./instruments/highDrums";
+import { FluteInstrument } from "./instruments/flute";
+import { PadsInstrument } from "./instruments/pads";
 
 enum ScaleType {
     Major = "major",
@@ -8,7 +15,11 @@ enum ScaleType {
 
 enum Instrument {
     Sine = "sine",
-    Drums = "drums"
+    Bass = "bass",
+    LowDrums = "low_drums",
+    HighDrums = "high_drums",
+    Flute = "flute",
+    Pads = "pads",
 }
 
 interface FaceProperties {
@@ -31,8 +42,10 @@ class Sonifier {
     private reverbAmount: number = 0.3;
     private volumeAmount: number = 0.1;
     private pannerPool: PannerNode[] = [];
-    private gainNodePool: GainNode[] = [];
     private compressor: DynamicsCompressorNode;
+
+    private instruments = new Map<Instrument, InstrumentAPI>();
+    private arpStates: Map<FacePosition, { order: [Cell, number][] }> = new Map();
 
     constructor(liquiprism: Liquiprism, scaleType: ScaleType = ScaleType.Major) {
         this.liquiprism = liquiprism;
@@ -62,6 +75,20 @@ class Sonifier {
         this.setReverb(this.reverbAmount);
         this.setVolume(this.volumeAmount);
 
+        const instrumentCtx: InstrumentContext = {
+            audio: this.audioContext,
+            dry: this.dryGain,
+            wet: this.wetGain,
+            convolver: this.convolver,
+            pannerForFace: (fp: number) => this.getPannerNode(fp as FacePosition),
+        };
+        this.instruments.set(Instrument.Bass, new BassInstrument(instrumentCtx));
+        this.instruments.set(Instrument.Sine, new SineInstrument(instrumentCtx));
+        this.instruments.set(Instrument.LowDrums, new LowDrumsInstrument(instrumentCtx));
+        this.instruments.set(Instrument.HighDrums, new HighDrumsInstrument(instrumentCtx));
+        this.instruments.set(Instrument.Flute, new FluteInstrument(instrumentCtx));
+        this.instruments.set(Instrument.Pads, new PadsInstrument(instrumentCtx));
+
         this.updateLegendSonifier();
 
     }
@@ -84,9 +111,16 @@ class Sonifier {
 
         const faceProperties = new Map<FacePosition, FaceProperties>();
         basePitches.forEach((basePitch, facePosition) => {
+            let instrument: Instrument = Instrument.Sine;
+            if (facePosition === FacePosition.BOTTOM) instrument = Instrument.Bass;
+            if (facePosition === FacePosition.FRONT) instrument = Instrument.Flute;
+            if (facePosition === FacePosition.LEFT) instrument = Instrument.LowDrums;
+            if (facePosition === FacePosition.RIGHT) instrument = Instrument.HighDrums;
+            if (facePosition === FacePosition.BACK) instrument = Instrument.Pads;
+            if (facePosition === FacePosition.TOP) instrument = Instrument.Sine;
             faceProperties.set(facePosition, {
                 muted: false,
-                instrument: Instrument.Sine,
+                instrument,
                 pitchGrid: this.createPitchGrid(basePitch)
             });
         });
@@ -152,6 +186,9 @@ class Sonifier {
         Object.values(FacePosition).forEach((facePosition) => {
             const properties = this.faceProperties.get(facePosition as FacePosition);
             if (properties?.muted) {
+                if (properties.instrument === Instrument.Bass) {
+                    this.instruments.get(Instrument.Bass)?.noteOff?.(facePosition as number, true);
+                }
                 return;
             }
             const face = this.liquiprism.getFace(facePosition as FacePosition);
@@ -173,6 +210,27 @@ class Sonifier {
     }
 
     private sonifyFace(face: Face, facePosition: FacePosition, pitchGrid: number[][]): void {
+        const properties = this.faceProperties.get(facePosition);
+        if (!properties) return;
+
+        if (properties.instrument === Instrument.Bass) {
+            const candidates: number[] = [];
+            for (let i = 0; i < this.liquiprism.size; i++) {
+                for (let j = 0; j < this.liquiprism.size; j++) {
+                    const cell = face.getCell([i, j]);
+                    if (cell.stimulated) candidates.push(pitchGrid[i][j]);
+                }
+            }
+            if (candidates.length === 0) {
+                this.instruments.get(Instrument.Bass)?.noteOff?.(facePosition, false);
+                return;
+            }
+            const pitch = candidates[Math.floor(Math.random() * candidates.length)];
+            const freq = this.midiToFrequency(pitch);
+            this.instruments.get(Instrument.Bass)!.noteOn(facePosition, freq, { duration: this.getDuration(Instrument.Bass) });
+            return;
+        }
+
         let note_candidates: [Cell, number][] = [];
         for (let i = 0; i < this.liquiprism.size; i++) {
             for (let j = 0; j < this.liquiprism.size; j++) {
@@ -186,10 +244,140 @@ class Sonifier {
             }
         }
 
+        // Build or update arpeggiator order for this face
+        const prevState = this.arpStates.get(facePosition);
+        const sortedByPitch = [...note_candidates].sort((a, b) => a[1] - b[1]).slice(0, 5); // Limit to 5 notes
+        const sameOrder = (a: [Cell, number][], b: [Cell, number][]) => {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) if (a[i][1] !== b[i][1]) return false;
+            return true;
+        };
+
+        if (!prevState || !sameOrder(prevState.order, sortedByPitch)) {
+            // reset arp state for this face
+            this.arpStates.set(facePosition, { order: sortedByPitch });
+        } else if (prevState) {
+            // keep existing order
+            this.arpStates.set(facePosition, prevState);
+        }
+
+        const instr = this.faceProperties.get(facePosition)?.instrument ?? Instrument.Sine;
+        const dur = this.getDuration(instr);
+
+        if (instr === Instrument.Sine) {
+            const state = this.arpStates.get(facePosition);
+            if (!state || state.order.length === 0) return;
+
+            // Randomly select arp mode for this arpeggio
+            const arpModes: ("up" | "down" | "updown" | "random")[] = ["up", "down", "updown", "random"];
+            const randomArpMode = arpModes[Math.floor(Math.random() * arpModes.length)];
+
+            // Create the sequence based on randomly selected arp mode
+            let sequence: number[] = [];
+            if (randomArpMode === "up") {
+                sequence = state.order.map((_, i) => i);
+            } else if (randomArpMode === "down") {
+                sequence = state.order.map((_, i) => state.order.length - 1 - i);
+            } else if (randomArpMode === "updown") {
+                sequence = state.order.map((_, i) => i);
+                if (state.order.length > 1) {
+                    // Add reverse sequence (excluding first and last to avoid duplication)
+                    for (let i = state.order.length - 2; i > 0; i--) {
+                        sequence.push(i);
+                    }
+                }
+            } else { // random
+                // Create a shuffled sequence of indices
+                sequence = state.order.map((_, i) => i);
+                // Fisher-Yates shuffle algorithm
+                for (let i = sequence.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
+                }
+            }
+
+            // Calculate stepDuration based on liquiprism step_time divided by sequence length
+            const stepTimeMs = this.liquiprism.step_time; // in milliseconds
+            const stepDuration = (stepTimeMs / 1000) * 0.8; // Convert to seconds, use 80% of step time
+            const noteDelay = sequence.length > 1 ? stepDuration / sequence.length : 0;
+
+            // Schedule all notes in the sequence with delays
+            sequence.forEach((orderIdx, seqIdx) => {
+                const [, pitch] = state.order[orderIdx];
+                const freq = this.midiToFrequency(pitch);
+                const delay = seqIdx * noteDelay;
+
+                // Schedule the note to start after the delay
+                setTimeout(() => {
+                    this.instruments.get(instr)?.noteOn(facePosition, freq, { duration: dur });
+                }, delay * 1000); // Convert to milliseconds
+            });
+
+            return;
+        }
+
+        // Handle drum instruments (they don't use pitch information)
+        if (instr === Instrument.LowDrums || instr === Instrument.HighDrums) {
+            const notes = this.getNotes(note_candidates);
+            notes.forEach(([cell, pitch]) => {
+                // For drums, we pass frequency but the instrument ignores it and generates its own sounds
+                const freq = this.midiToFrequency(pitch);
+                this.instruments.get(instr)?.noteOn(facePosition, freq, {
+                    duration: dur,
+                    stepTime: this.liquiprism.step_time
+                });
+            });
+            return;
+        }
+
+        // Handle Flute instrument with chord/arpeggio modes
+        if (instr === Instrument.Flute) {
+            const notes = this.getNotes(note_candidates);
+            if (notes.length > 0) {
+                const frequencies = notes.map(([cell, pitch]) => this.midiToFrequency(pitch));
+                // Use first frequency as main freq, pass all as frequencies array
+                this.instruments.get(instr)?.noteOn(facePosition, frequencies[0], {
+                    duration: dur,
+                    stepTime: this.liquiprism.step_time,
+                    frequencies: frequencies
+                });
+            }
+            return;
+        }
+
+        // default polyphonic behavior for other instruments
         const notes = this.getNotes(note_candidates);
         notes.forEach(([cell, pitch]) => {
-            this.playNote(facePosition, cell, pitch);
+            const freq = this.midiToFrequency(pitch);
+            this.instruments.get(instr)?.noteOn(facePosition, freq, { duration: dur });
         });
+    }
+
+    public stopAll(immediate: boolean = true): void {
+        const now = this.audioContext.currentTime;
+        try {
+            this.masterGain.gain.cancelScheduledValues(now);
+            if (immediate) {
+                this.masterGain.gain.setValueAtTime(0.0001, now);
+            } else {
+                this.masterGain.gain.setTargetAtTime(0.0001, now, 0.05);
+            }
+        } catch { }
+
+        try {
+            for (const f of this.liquiprism.faces) {
+                this.instruments.get(Instrument.Bass)?.noteOff?.(f.position, immediate);
+            }
+        } catch { }
+
+        try {
+            for (const [, faceMap] of this.oscillators) {
+                for (const [, node] of faceMap) {
+                    try { (node as OscillatorNode | AudioBufferSourceNode).stop(); } catch { }
+                }
+                faceMap.clear();
+            }
+        } catch { }
     }
 
     private stopNote(facePosition: FacePosition, cell: Cell): void {
@@ -202,31 +390,6 @@ class Sonifier {
                 face_oscillators.delete(cell);
             }
         }
-    }
-
-    private playNote(facePosition: FacePosition, cell: Cell, pitch: number): void {
-        const properties = this.faceProperties.get(facePosition);
-        if (!properties) return;
-
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.getGainNode();
-        const panner = this.getPannerNode(facePosition);
-
-        this.configureInstrument(oscillator, gainNode, properties.instrument, pitch);
-
-        oscillator.connect(gainNode).connect(panner);
-        panner.connect(this.dryGain);
-        panner.connect(this.convolver);
-        oscillator.start();
-        oscillator.stop(this.audioContext.currentTime + this.getDuration(properties.instrument));
-
-        oscillator.onended = () => {
-            this.releaseResources(gainNode, panner);
-        };
-    }
-
-    private getGainNode(): GainNode {
-        return this.gainNodePool.pop() || this.audioContext.createGain();
     }
 
     private getPannerNode(facePosition: FacePosition): PannerNode {
@@ -254,48 +417,15 @@ class Sonifier {
         return panner;
     }
 
-    private configureInstrument(
-        oscillator: OscillatorNode,
-        gainNode: GainNode,
-        instrument: Instrument,
-        pitch: number
-    ): void {
-        const frequency = this.midiToFrequency(pitch);
-        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-
-        switch (instrument) {
-            case Instrument.Drums:
-                oscillator.type = "sine";
-                this.configureDrumEnvelope(gainNode);
-                break;
-            default:
-                oscillator.type = "sine";
-                this.configureSineEnvelope(gainNode);
-        }
-    }
-
-    private configureDrumEnvelope(gainNode: GainNode): void {
-        gainNode.gain.setValueAtTime(1, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.25);
-    }
-
-    private configureSineEnvelope(gainNode: GainNode): void {
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
-    }
-
     private getDuration(instrument: Instrument): number {
         return {
-            [Instrument.Drums]: 0.25,
-            [Instrument.Sine]: 0.5
+            [Instrument.Sine]: 0.5,
+            [Instrument.Bass]: 0.6,
+            [Instrument.LowDrums]: 0.3,
+            [Instrument.HighDrums]: 0.2,
+            [Instrument.Flute]: 0.8,
+            [Instrument.Pads]: 2.0
         }[instrument];
-    }
-
-    private releaseResources(gainNode: GainNode, panner: PannerNode): void {
-        try { gainNode.disconnect(); } catch { }
-        try { panner.disconnect(); } catch { }
-        this.gainNodePool.push(gainNode);
-        this.pannerPool.push(panner);
     }
 
     private midiToFrequency(note: number): number {
