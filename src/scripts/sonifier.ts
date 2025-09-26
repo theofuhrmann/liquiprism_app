@@ -6,6 +6,7 @@ import { LowDrumsInstrument } from "./instruments/lowDrums";
 import { HighDrumsInstrument } from "./instruments/highDrums";
 import { FluteInstrument } from "./instruments/flute";
 import { PadsInstrument } from "./instruments/pads";
+import { LeadInstrument } from "./instruments/lead";
 
 enum ScaleType {
     Major = "major",
@@ -20,6 +21,7 @@ enum Instrument {
     HighDrums = "high_drums",
     Flute = "flute",
     Pads = "pads",
+    Lead = "lead",
 }
 
 interface FaceProperties {
@@ -88,6 +90,7 @@ class Sonifier {
         this.instruments.set(Instrument.HighDrums, new HighDrumsInstrument(instrumentCtx));
         this.instruments.set(Instrument.Flute, new FluteInstrument(instrumentCtx));
         this.instruments.set(Instrument.Pads, new PadsInstrument(instrumentCtx));
+        this.instruments.set(Instrument.Lead, new LeadInstrument(instrumentCtx));
 
         this.updateLegendSonifier();
 
@@ -110,14 +113,17 @@ class Sonifier {
         ]);
 
         const faceProperties = new Map<FacePosition, FaceProperties>();
+        const instrumentMap = new Map<FacePosition, Instrument>([
+            [FacePosition.BOTTOM, Instrument.Bass],
+            [FacePosition.TOP, Instrument.Sine],
+            [FacePosition.FRONT, Instrument.Flute],
+            [FacePosition.BACK, Instrument.Pads],
+            [FacePosition.LEFT, Instrument.LowDrums],
+            [FacePosition.RIGHT, Instrument.HighDrums],
+        ]);
+
         basePitches.forEach((basePitch, facePosition) => {
-            let instrument: Instrument = Instrument.Sine;
-            if (facePosition === FacePosition.BOTTOM) instrument = Instrument.Bass;
-            if (facePosition === FacePosition.FRONT) instrument = Instrument.Flute;
-            if (facePosition === FacePosition.LEFT) instrument = Instrument.LowDrums;
-            if (facePosition === FacePosition.RIGHT) instrument = Instrument.HighDrums;
-            if (facePosition === FacePosition.BACK) instrument = Instrument.Pads;
-            if (facePosition === FacePosition.TOP) instrument = Instrument.Sine;
+            const instrument = instrumentMap.get(facePosition) ?? Instrument.Sine;
             faceProperties.set(facePosition, {
                 muted: false,
                 instrument,
@@ -345,6 +351,21 @@ class Sonifier {
             return;
         }
 
+        // Handle Lead instrument with melody generation
+        if (instr === Instrument.Lead) {
+            const notes = this.getNotes(note_candidates);
+            if (notes.length > 0) {
+                const frequencies = notes.map(([cell, pitch]) => this.midiToFrequency(pitch));
+                // Use first frequency as main freq, pass all as frequencies array
+                this.instruments.get(instr)?.noteOn(facePosition, frequencies[0], {
+                    duration: dur,
+                    stepTime: this.liquiprism.step_time,
+                    frequencies: frequencies
+                });
+            }
+            return;
+        }
+
         // default polyphonic behavior for other instruments
         const notes = this.getNotes(note_candidates);
         notes.forEach(([cell, pitch]) => {
@@ -424,7 +445,8 @@ class Sonifier {
             [Instrument.LowDrums]: 0.3,
             [Instrument.HighDrums]: 0.2,
             [Instrument.Flute]: 0.8,
-            [Instrument.Pads]: 2.0
+            [Instrument.Pads]: 2.0,
+            [Instrument.Lead]: 0.7
         }[instrument];
     }
 
@@ -461,6 +483,15 @@ class Sonifier {
         this.masterGain.gain.setValueAtTime(a, this.audioContext.currentTime);
     }
 
+    public setFaceInstrument(facePosition: FacePosition, instrument: Instrument): void {
+        facePosition = FacePosition[facePosition as unknown as keyof typeof FacePosition];
+        const properties = this.faceProperties.get(facePosition);
+        if (properties) {
+            properties.instrument = instrument;
+            this.updateLegendSonifier();
+        }
+    }
+
     public updateLegendSonifier() {
         const faceData = Array.from(this.faceProperties, ([position, props]) => ({
             position: FacePosition[position].toLowerCase(),
@@ -474,4 +505,4 @@ class Sonifier {
 
 }
 
-export { Sonifier };
+export { Sonifier, Instrument };

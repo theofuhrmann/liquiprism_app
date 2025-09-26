@@ -31,12 +31,12 @@ import "../styles/styles.css";
             id="speed"
             name="speed"
             min="0.5"
-            max="5"
+            max="2"
             value="1"
-            step="0.5"
+            step="0.25"
             oninput="updateSpeedSliderValue(this)"
         />
-        <span id="maxValue">5x</span>
+        <span id="maxValue">2x</span>
     </div>
 
     <div class="form-group">
@@ -67,7 +67,12 @@ import "../styles/styles.css";
                         <option value="4">4</option>
                     </select>
                 </td>
-                <td class="instrument"></td>
+                <td class="instrument">
+                    <select onchange="setFaceInstrument('front', this.value)">
+                        <option value="flute" selected>flute</option>
+                        <option value="lead">lead</option>
+                    </select>
+                </td>
                 <td>
                     <input
                         type="checkbox"
@@ -297,6 +302,16 @@ import "../styles/styles.css";
         document.dispatchEvent(event);
     }
 
+    function setFaceInstrument(facePosition, instrument) {
+        const event = new CustomEvent("faceInstrumentChange", {
+            detail: {
+                facePosition: facePosition.toUpperCase(),
+                instrument: instrument,
+            },
+        });
+        document.dispatchEvent(event);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const dimension_slider = document.getElementById("dimension");
         if (dimension_slider instanceof HTMLInputElement) {
@@ -345,8 +360,15 @@ import "../styles/styles.css";
                 `legend-${data.position}`,
             );
             if (legendItem) {
-                legendItem.querySelector(".instrument").textContent =
-                    `${data.instrument}`;
+                const instrumentCell = legendItem.querySelector(".instrument");
+                if (data.position === "front") {
+                    const dropdown = instrumentCell.querySelector("select");
+                    if (dropdown) {
+                        dropdown.value = data.instrument;
+                    }
+                } else {
+                    instrumentCell.textContent = `${data.instrument}`;
+                }
             } else {
                 console.log("no legend item found");
             }

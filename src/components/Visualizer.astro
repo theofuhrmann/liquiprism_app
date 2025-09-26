@@ -235,6 +235,11 @@
       sonifier.setMuteFace(facePosition, muted);
     });
 
+    document.addEventListener("faceInstrumentChange", (event) => {
+      const { facePosition, instrument } = (event as CustomEvent).detail;
+      sonifier.setFaceInstrument(facePosition, instrument);
+    });
+
     window.addEventListener("resize", () => {
       const aspect = container.clientWidth / container.clientHeight;
       camera.left = -d * aspect;

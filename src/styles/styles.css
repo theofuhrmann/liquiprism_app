@@ -204,6 +204,40 @@ input[type="checkbox"] {
     padding-right: 16px;
 }
 
+/* Instrument dropdown styling - same as update-rate */
+.instrument select {
+    background-color: black;
+    color: white;
+    border: 1px solid white;
+    border-radius: 0;
+    padding: 2px 4px;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='white' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 8px;
+    padding-right: 16px;
+}
+
+.instrument select:focus {
+    border: 1px solid white;
+    outline: none;
+}
+
+.instrument select option {
+    background-color: black;
+    color: white;
+    font-family: inherit;
+    border: none;
+    padding: 2px 4px;
+}
+
 input[type="checkbox"]:checked {
     background-color: black;
 }
