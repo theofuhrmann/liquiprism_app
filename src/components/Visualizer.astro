@@ -68,7 +68,7 @@
         createLiquiprismMeshes(liquiprism, liquiprismGroup, FACE_TINTS);
       faceCellMeshes = meshes;
       faceGroups = groups;
-      liquiprism.step_time = 1000 / lastSpeed;
+      liquiprism.step_time = 2000 / lastSpeed;
 
       updateCells(liquiprism, faceCellMeshes, FACE_TINTS);
       updateLegendVisualizer(liquiprism, FACE_TINTS);
@@ -89,7 +89,7 @@
     document.addEventListener("speed", (event) => {
       const customEvent = event as CustomEvent;
       lastSpeed = Number(customEvent.detail.speed) || 1;
-      liquiprism.step_time = 1000 / lastSpeed;
+      liquiprism.step_time = 2000 / lastSpeed;
     });
 
     document.addEventListener("randomUpdateRateChange", (event) => {
@@ -101,7 +101,8 @@
 
     document.addEventListener("faceUpdateRateChange", (event) => {
       const { facePosition, updateRate } = (event as CustomEvent).detail;
-      const facePositionEnum = FacePosition[facePosition as keyof typeof FacePosition];
+      const facePositionEnum =
+        FacePosition[facePosition as keyof typeof FacePosition];
       liquiprism.setFaceUpdateRate(facePositionEnum, updateRate);
     });
 
