@@ -267,7 +267,6 @@ import "../styles/styles.css";
         if (autopilotActive) {
             autopilotActive = false;
             updateAutopilotUI();
-            stopAutopilot();
 
             const event = new CustomEvent("autopilotStateChange", {
                 detail: { active: false },
