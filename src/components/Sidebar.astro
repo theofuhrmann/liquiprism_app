@@ -3,7 +3,7 @@ import "../styles/styles.css";
 ---
 
 <div id="sidebar">
-    <h1 style="margin-top: 0">liquiprism 2.0</h1>
+    <h1 style="margin: 0">liquiprism 2.0</h1>
     <div>
         <button id="togglePlay" class="play-button">play</button>
         <button id="toggleAutopilot" class="autopilot-button">auto</button>
@@ -38,16 +38,6 @@ import "../styles/styles.css";
             oninput="updateSpeedSliderValue(this)"
         />
         <span id="maxValue">2x</span>
-    </div>
-
-    <div class="form-group">
-        <label for="randomUpdateRate">random update rate:</label>
-        <input
-            type="checkbox"
-            id="randomUpdateRate"
-            name="randomUpdateRate"
-            onchange="updateRandomUpdateRate(this)"
-        />
     </div>
 
     <div id="legend">
@@ -294,13 +284,6 @@ import "../styles/styles.css";
         slider.setAttribute("data-value", slider.value);
         const event = new CustomEvent("speed", {
             detail: { speed: slider.value },
-        });
-        document.dispatchEvent(event);
-    }
-
-    function updateRandomUpdateRate(checkbox) {
-        const event = new CustomEvent("randomUpdateRateChange", {
-            detail: { randomUpdateRate: checkbox.checked },
         });
         document.dispatchEvent(event);
     }

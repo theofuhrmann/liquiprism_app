@@ -180,10 +180,6 @@ input[type="checkbox"] {
     -moz-appearance: none;
 }
 
-#randomUpdateRate {
-    margin: 5px;
-}
-
 .update-rate select {
     background-color: black;
     color: white;

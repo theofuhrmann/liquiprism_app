@@ -92,13 +92,6 @@
       liquiprism.step_time = 2000 / lastSpeed;
     });
 
-    document.addEventListener("randomUpdateRateChange", (event) => {
-      const customEvent = event as CustomEvent;
-      const randomUpdateRate = customEvent.detail.randomUpdateRate;
-      liquiprism = new Liquiprism(liquiprism.size, randomUpdateRate);
-      createLiquiprism();
-    });
-
     document.addEventListener("faceUpdateRateChange", (event) => {
       const { facePosition, updateRate } = (event as CustomEvent).detail;
       const facePositionEnum =
