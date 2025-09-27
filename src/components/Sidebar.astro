@@ -6,6 +6,7 @@ import "../styles/styles.css";
     <h1 style="margin-top: 0">liquiprism 2.0</h1>
     <div>
         <button id="togglePlay" class="play-button">play</button>
+        <button id="toggleAutopilot" class="autopilot-button">auto</button>
     </div>
 
     <label for="dimension">dimension:</label>
@@ -224,6 +225,7 @@ import "../styles/styles.css";
 
 <script is:inline>
     let playing = false;
+    let autopilotActive = false;
 
     function togglePlay() {
         playing = !playing;
@@ -236,7 +238,43 @@ import "../styles/styles.css";
         document.dispatchEvent(event);
     }
 
+    function toggleAutopilot() {
+        autopilotActive = !autopilotActive;
+        updateAutopilotUI();
+
+        const event = new CustomEvent("autopilotStateChange", {
+            detail: { active: autopilotActive },
+        });
+        document.dispatchEvent(event);
+    }
+
+    function updateAutopilotUI() {
+        const button = document.getElementById("toggleAutopilot");
+        button.textContent = autopilotActive ? "stop" : "auto";
+        if (autopilotActive) {
+            button.classList.add("active");
+        } else {
+            button.classList.remove("active");
+        }
+    }
+
     document.getElementById("togglePlay").addEventListener("click", togglePlay);
+    document
+        .getElementById("toggleAutopilot")
+        .addEventListener("click", toggleAutopilot);
+
+    document.addEventListener("stopAutopilot", () => {
+        if (autopilotActive) {
+            autopilotActive = false;
+            updateAutopilotUI();
+            stopAutopilot();
+
+            const event = new CustomEvent("autopilotStateChange", {
+                detail: { active: false },
+            });
+            document.dispatchEvent(event);
+        }
+    });
 
     document.addEventListener("keydown", (e) => {
         if (e.code === "Space") {

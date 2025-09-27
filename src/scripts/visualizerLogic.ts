@@ -162,19 +162,27 @@ export function updateFacePositions(
     liquiprism.frontmostFace = frontmostFace;
 }
 
-export function updateRotation(keys: Record<string, boolean>, angle_x: number, angle_y: number, delta: number) {
-    const rotationSpeed = 2.5;
-    if (keys["ArrowUp"]) {
-        angle_x -= rotationSpeed * delta;
-    }
-    if (keys["ArrowDown"]) {
-        angle_x += rotationSpeed * delta;
-    }
-    if (keys["ArrowLeft"]) {
-        angle_y -= rotationSpeed * delta;
-    }
-    if (keys["ArrowRight"]) {
-        angle_y += rotationSpeed * delta;
+
+
+export function updateRotation(keys: Record<string, boolean>, angle_x: number, angle_y: number, delta: number, isAutopilot: boolean = false) {
+    if (isAutopilot) {
+        const autopilotSpeed = 1;
+        angle_x -= autopilotSpeed * delta;
+        angle_y += (autopilotSpeed - 0.25) * delta;
+    } else {
+        const manualSpeed = 2.5;
+        if (keys["ArrowUp"]) {
+            angle_x -= manualSpeed * delta;
+        }
+        if (keys["ArrowDown"]) {
+            angle_x += manualSpeed * delta;
+        }
+        if (keys["ArrowLeft"]) {
+            angle_y -= manualSpeed * delta;
+        }
+        if (keys["ArrowRight"]) {
+            angle_y += manualSpeed * delta;
+        }
     }
     return { angle_x, angle_y };
 }

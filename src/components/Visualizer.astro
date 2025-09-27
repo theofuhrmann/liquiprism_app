@@ -130,13 +130,27 @@
     });
 
     const keys: Record<string, boolean> = {};
+    let isAutopilotActive = false;
 
     document.addEventListener("keydown", (event) => {
       keys[event.key] = true;
+
+      if (
+        isAutopilotActive &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
+      ) {
+        const stopAutopilotEvent = new CustomEvent("stopAutopilot");
+        document.dispatchEvent(stopAutopilotEvent);
+      }
     });
 
     document.addEventListener("keyup", (event) => {
       keys[event.key] = false;
+    });
+
+    document.addEventListener("autopilotStateChange", (event) => {
+      const { active } = (event as CustomEvent).detail;
+      isAutopilotActive = active;
     });
 
     function updateCellsAndFrontmostFace(time: number) {
@@ -192,7 +206,13 @@
       const delta = (time - rotationLastTime!) / 500;
       rotationLastTime = time;
 
-      const angles = updateRotation(keys, angle_x, angle_y, delta);
+      const angles = updateRotation(
+        keys,
+        angle_x,
+        angle_y,
+        delta,
+        isAutopilotActive,
+      );
       angle_x = angles.angle_x;
       angle_y = angles.angle_y;
 

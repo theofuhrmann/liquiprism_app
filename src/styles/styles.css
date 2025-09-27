@@ -74,6 +74,23 @@ canvas {
     color: white;
 }
 
+.autopilot-button {
+    margin: 20px 0px 20px 10px;
+    background: white;
+    color: black;
+    border: 1px solid white;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: monospace;
+    width: 80px;
+}
+
+.autopilot-button.active {
+    background: black;
+    color: white;
+    border: 1px solid white;
+}
+
 input[type="range"] {
     margin: 20px 0px;
     appearance: none;
