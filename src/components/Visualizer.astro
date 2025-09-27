@@ -107,6 +107,20 @@
       }
     });
 
+    document.addEventListener("keyChange", (event) => {
+      const { key } = (event as CustomEvent).detail;
+      if (sonifier) {
+        sonifier.setKey(key);
+      }
+    });
+
+    document.addEventListener("scaleChange", (event) => {
+      const { scale } = (event as CustomEvent).detail;
+      if (sonifier) {
+        sonifier.setScale(scale);
+      }
+    });
+
     document.addEventListener("volumeChange", (event) => {
       const { amount } = (event as CustomEvent).detail;
       lastVolumeAmount = amount;

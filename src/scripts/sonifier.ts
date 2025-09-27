@@ -37,6 +37,7 @@ class Sonifier {
     private noteThreshold: number;
     private faceProperties: Map<FacePosition, FaceProperties>;
     private scaleType: ScaleType;
+    private rootNote: string = "C";
     private convolver: ConvolverNode;
     private masterGain: GainNode;
     private wetGain: GainNode;
@@ -504,6 +505,50 @@ class Sonifier {
             detail: { legendData: faceData },
         });
         document.dispatchEvent(event);
+    }
+
+    public setKey(key: string): void {
+        this.rootNote = key;
+        // Regenerate pitch grids for all faces with the new key
+        this.regeneratePitchGrids();
+    }
+
+    public setScale(scale: string): void {
+        this.scaleType = scale as ScaleType;
+        // Regenerate pitch grids for all faces with the new scale
+        this.regeneratePitchGrids();
+    }
+
+    private regeneratePitchGrids(): void {
+        // Regenerate pitch grids for all faces with new key/scale
+        Object.values(FacePosition).forEach((facePosition) => {
+            const properties = this.faceProperties.get(facePosition as FacePosition);
+            if (properties) {
+                const basePitch = this.getBasePitchForFace(facePosition as FacePosition);
+                properties.pitchGrid = this.createPitchGrid(basePitch);
+            }
+        });
+        this.update();
+    } private getBasePitchForFace(facePosition: FacePosition): number {
+        // Convert root note to MIDI note number
+        const noteToMidi: Record<string, number> = {
+            "C": 60, "C#": 61, "D": 62, "D#": 63, "E": 64, "F": 65,
+            "F#": 66, "G": 55, "G#": 56, "A": 57, "A#": 58, "B": 59
+        };
+
+        const rootMidi = noteToMidi[this.rootNote] || 60; // Default to C4 if unknown key
+
+        // Apply octave offset based on face position (same as original logic)
+        const octaveOffsets: Record<FacePosition, number> = {
+            [FacePosition.FRONT]: -12,
+            [FacePosition.BACK]: 0,
+            [FacePosition.LEFT]: -24,
+            [FacePosition.RIGHT]: 12,
+            [FacePosition.TOP]: 24,
+            [FacePosition.BOTTOM]: -36
+        };
+
+        return rootMidi + (octaveOffsets[facePosition] || 0);
     }
 
 }

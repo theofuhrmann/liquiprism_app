@@ -205,6 +205,34 @@ import "../styles/styles.css";
         />
         <span>wet</span>
     </div>
+
+    <div class="form-group" style="margin-top: 8px;">
+        <label for="key" style="margin-right: 8px;">key:</label>
+        <select id="key" name="key" onchange="updateKey(this)">
+            <option value="C" selected>C</option>
+            <option value="C#">C#</option>
+            <option value="D">D</option>
+            <option value="D#">D#</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="F#">F#</option>
+            <option value="G">G</option>
+            <option value="G#">G#</option>
+            <option value="A">A</option>
+            <option value="A#">A#</option>
+            <option value="B">B</option>
+        </select>
+
+        <label for="scale" style="margin-left: 10px; margin-right: 8px;"
+            >scale:</label
+        >
+        <select id="scale" name="scale" onchange="updateScale(this)">
+            <option value="major" selected>major</option>
+            <option value="minor">minor</option>
+            <option value="blues">blues</option>
+        </select>
+    </div>
+
     <div class="explainer">
         <p>c: color</p>
         <p>r: update rate</p>
@@ -298,6 +326,20 @@ import "../styles/styles.css";
     function updateReverb(slider) {
         const event = new CustomEvent("reverbChange", {
             detail: { amount: parseFloat(slider.value) },
+        });
+        document.dispatchEvent(event);
+    }
+
+    function updateKey(select) {
+        const event = new CustomEvent("keyChange", {
+            detail: { key: select.value },
+        });
+        document.dispatchEvent(event);
+    }
+
+    function updateScale(select) {
+        const event = new CustomEvent("scaleChange", {
+            detail: { scale: select.value },
         });
         document.dispatchEvent(event);
     }
