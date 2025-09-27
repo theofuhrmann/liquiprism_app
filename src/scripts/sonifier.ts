@@ -107,9 +107,12 @@ class Sonifier {
 
     private initializeFaceProperties(): Map<FacePosition, FaceProperties> {
         const basePitches = new Map<FacePosition, number>([
-            [FacePosition.BOTTOM, 24], [FacePosition.TOP, 84],
-            [FacePosition.FRONT, 48], [FacePosition.BACK, 60],
-            [FacePosition.LEFT, 36], [FacePosition.RIGHT, 72],
+            [FacePosition.BOTTOM, 24],  // C1 - Bass register
+            [FacePosition.LEFT, 36],    // C2 - Low drums
+            [FacePosition.FRONT, 48],   // C3 - Flute/Lead mid-range
+            [FacePosition.BACK, 60],    // C4 - Pads (middle C)
+            [FacePosition.RIGHT, 72],   // C5 - High drums
+            [FacePosition.TOP, 84],     // C6 - Sine high register
         ]);
 
         const faceProperties = new Map<FacePosition, FaceProperties>();
@@ -178,7 +181,9 @@ class Sonifier {
                 rowIntervals.sort((a, b) => a - b);
             }
 
-            const scaleBase = basePitch + (intervalLength - 1 - row);
+            const octaveOffset = Math.floor((this.liquiprism.size - 1 - row) / 2) * 12;
+            const scaleBase = basePitch + octaveOffset;
+
             const rowPitches = rowIntervals.map(
                 (interval) => scaleBase + interval
             );
@@ -192,9 +197,6 @@ class Sonifier {
         Object.values(FacePosition).forEach((facePosition) => {
             const properties = this.faceProperties.get(facePosition as FacePosition);
             if (properties?.muted) {
-                if (properties.instrument === Instrument.Bass) {
-                    this.instruments.get(Instrument.Bass)?.noteOff?.(facePosition as number, true);
-                }
                 return;
             }
             const face = this.liquiprism.getFace(facePosition as FacePosition);
@@ -204,7 +206,7 @@ class Sonifier {
         });
     }
 
-    private getNotes(note_candidates: [Cell, number][]): [Cell, number][] {
+    private getNotes(note_candidates: [Cell, number][], maxNotes?: number): [Cell, number][] {
         const candidates = [...note_candidates];
 
         for (let i = candidates.length - 1; i > 0; i--) {
@@ -212,30 +214,13 @@ class Sonifier {
             [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
 
-        return candidates.slice(0, Math.min(this.noteThreshold, candidates.length));
+        const limit = maxNotes ?? this.noteThreshold;
+        return candidates.slice(0, Math.min(limit, candidates.length));
     }
 
     private sonifyFace(face: Face, facePosition: FacePosition, pitchGrid: number[][]): void {
         const properties = this.faceProperties.get(facePosition);
         if (!properties) return;
-
-        if (properties.instrument === Instrument.Bass) {
-            const candidates: number[] = [];
-            for (let i = 0; i < this.liquiprism.size; i++) {
-                for (let j = 0; j < this.liquiprism.size; j++) {
-                    const cell = face.getCell([i, j]);
-                    if (cell.stimulated) candidates.push(pitchGrid[i][j]);
-                }
-            }
-            if (candidates.length === 0) {
-                this.instruments.get(Instrument.Bass)?.noteOff?.(facePosition, false);
-                return;
-            }
-            const pitch = candidates[Math.floor(Math.random() * candidates.length)];
-            const freq = this.midiToFrequency(pitch);
-            this.instruments.get(Instrument.Bass)!.noteOn(facePosition, freq, { duration: this.getDuration(Instrument.Bass) });
-            return;
-        }
 
         let note_candidates: [Cell, number][] = [];
         for (let i = 0; i < this.liquiprism.size; i++) {
@@ -338,7 +323,7 @@ class Sonifier {
 
         // Handle Flute instrument with chord/arpeggio modes
         if (instr === Instrument.Flute) {
-            const notes = this.getNotes(note_candidates);
+            const notes = this.getNotes(note_candidates, 6); // Maximum 6 notes for flute
             if (notes.length > 0) {
                 const frequencies = notes.map(([cell, pitch]) => this.midiToFrequency(pitch));
                 // Use first frequency as main freq, pass all as frequencies array
@@ -353,6 +338,21 @@ class Sonifier {
 
         // Handle Lead instrument with melody generation
         if (instr === Instrument.Lead) {
+            const notes = this.getNotes(note_candidates);
+            if (notes.length > 0) {
+                const frequencies = notes.map(([cell, pitch]) => this.midiToFrequency(pitch));
+                // Use first frequency as main freq, pass all as frequencies array
+                this.instruments.get(instr)?.noteOn(facePosition, frequencies[0], {
+                    duration: dur,
+                    stepTime: this.liquiprism.step_time,
+                    frequencies: frequencies
+                });
+            }
+            return;
+        }
+
+        // Handle Bass instrument with groovy monophonic patterns
+        if (instr === Instrument.Bass) {
             const notes = this.getNotes(note_candidates);
             if (notes.length > 0) {
                 const frequencies = notes.map(([cell, pitch]) => this.midiToFrequency(pitch));
@@ -385,12 +385,9 @@ class Sonifier {
             }
         } catch { }
 
-        try {
-            for (const f of this.liquiprism.faces) {
-                this.instruments.get(Instrument.Bass)?.noteOff?.(f.position, immediate);
-            }
-        } catch { }
 
+
+        // Clear any remaining oscillators
         try {
             for (const [, faceMap] of this.oscillators) {
                 for (const [, node] of faceMap) {
@@ -399,6 +396,9 @@ class Sonifier {
                 faceMap.clear();
             }
         } catch { }
+
+        // Clear arpeggiator states
+        this.arpStates.clear();
     }
 
     private stopNote(facePosition: FacePosition, cell: Cell): void {
@@ -464,6 +464,9 @@ class Sonifier {
                 face.cells.forEach((cell) => {
                     this.stopNote(facePosition, cell);
                 });
+
+                // Clear arpeggiator state for this face
+                this.arpStates.delete(facePosition);
             }
         }
     }
