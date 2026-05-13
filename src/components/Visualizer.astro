@@ -160,6 +160,43 @@
       isAutopilotActive = active;
     });
 
+    const canvas = renderer.domElement;
+    const POINTER_SENSITIVITY = 0.008;
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    canvas.addEventListener("pointerdown", (event) => {
+      isDragging = true;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+
+      if (isAutopilotActive) {
+        document.dispatchEvent(new CustomEvent("stopAutopilot"));
+      }
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!isDragging) return;
+      const deltaX = event.clientX - lastPointerX;
+      const deltaY = event.clientY - lastPointerY;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      angle_y += deltaX * POINTER_SENSITIVITY;
+      angle_x += deltaY * POINTER_SENSITIVITY;
+    });
+
+    const endDrag = (event: PointerEvent) => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+    };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+
     function updateCellsAndFrontmostFace(time: number) {
       if (time - lastUpdate >= liquiprism.step_time) {
         liquiprism.step();
