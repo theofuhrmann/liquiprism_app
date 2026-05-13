@@ -287,6 +287,7 @@
     document.addEventListener("togglePlay", (event) => {
       const { playing } = (event as CustomEvent).detail;
       if (playing) {
+        if (sonifier) sonifier.resume();
         startAnimation();
       } else {
         pauseAnimation();

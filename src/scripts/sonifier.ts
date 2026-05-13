@@ -487,6 +487,13 @@ class Sonifier {
         this.masterGain.gain.setValueAtTime(a, this.audioContext.currentTime);
     }
 
+    public resume(): Promise<void> {
+        if (this.audioContext.state === "suspended") {
+            return this.audioContext.resume();
+        }
+        return Promise.resolve();
+    }
+
     public setFaceInstrument(facePosition: FacePosition, instrument: Instrument): void {
         facePosition = FacePosition[facePosition as unknown as keyof typeof FacePosition];
         const properties = this.faceProperties.get(facePosition);
